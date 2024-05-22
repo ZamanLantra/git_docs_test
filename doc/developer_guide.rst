@@ -71,10 +71,11 @@ Step 2 - OP-PIC Declaration
 **Declare sets** - 
 The FemPIC application consists of three mesh element types (which we call sets): ``cells``, ``nodes``, and ``inlet-faces``. 
 These needs to be declared using the ``opp_decl_set`` API call together with the number of elements for each of these sets.
+
 In addition, FemPIC contains a particle set, that is defined using ``opp_decl_particle_set`` API call together with the number of particles and a mesh cell set. 
 
-The speciality of a particle set is that they can be resized (the set size can be increased or reduced during the simulation.
-In addition to the main particle set, we have used a temporary dummy particle set to hold some random data for particle injection initialization.
+The speciality of a particle set is that they can be resized (the set size can be increased or reduced during the simulation).
+Other than the main particle set, we have used a temporary dummy particle set to hold some random data for particle injection initialization.
 
 .. code-block:: c++
 
@@ -92,6 +93,7 @@ A good starting point for this design is to see what mesh elements are used the 
 
 **Declare maps** - Looking at the original Mini-FEM-PIC application's loops we see that mappings between cells and nodes, cells and cells, inlet-faces and nodes, inlet-faces and cells, and cells and nodes are required. 
 In addition, a particles to cells mapping is required. 
+
 This can be observed by the indirect access to data in each of the loops in the main iteration loops. 
 These connectivity information needs to be declared via the ``opp_decl_map`` API call:
 
@@ -143,7 +145,9 @@ A map created with a particle set is capable of changing its length during the s
 
 **Declare constants** - Finally global constants that are used in any of the computations in the loops needs to be declared.
 This is required due to the fact that when using code-generation later for parallelizations such as on GPUs (e.g. using CUDA or HIP), global constants needs to be copied over to the GPUs before they can be used in a GPU kernel. 
+
 Declaring them using the ``opp_decl_const<type>`` API call will indicate to the OP-PIC code-generator that these constants needs to be handled in a special way, generating code for copying them to the GPU for the relevant back-ends.
+The template types could be ``OPP_REAL``, ``OPP_INT``, ``OPP_BOOL``.
 
 .. code-block:: C
 
