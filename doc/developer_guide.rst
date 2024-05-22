@@ -29,45 +29,36 @@ The other kind of indirect loop is double-indirect.
 For example ``deposit_charge_on_nodes`` loop iterates over particles and increments data on nodes. But these nodes are not directly related to particles though one mapping. 
 Thus we may need to use two mappings, the first from particles to cells (p2c_map) and the second from cells to nodes (c2n_map).
 
+Within these above mentioned loop, there is a special loop which will move particles to cells accoring to the particle position, and the further details will be discussed in a later section.
+
 * Go to the ``OP-PIC/app_fempic`` directory and open the ``fempic.cpp`` file to view the original application.
 * Use the information in the readme file of that directory to code-generate and run the application.
 
-
-Basic Code Block
-----------------
-
-You can include a basic code block like this:
-
-::
-
-    # This is a basic code block
-    print("Hello from a basic code block!")
-
-Code Block with Syntax Highlighting
------------------------------------
-
-Here is a code block with Python syntax highlighting:
-
-.. code-block:: python
-
-    def add(a, b):
-        return a + b
-
-    result = add(2, 3)
-    print(result)
-
-Another example with C syntax highlighting:
+Original - Load mesh and initialization
+---------------------------------------
+The original code begins with allocating memory to hold the mesh data and then initializing them by reading in the mesh data, form the text file. 
+Go to the ``app_fempic/fempic_misc_mesh_loader.h`` to see the complete mesh loader, where we use the original fempic code to read from file and store in the data storage class ``DataPointers``.
 
 .. code-block:: c++
+    std::shared_ptr<DataPointers> m = load_mesh();
 
-    #include <stdio.h>
+In this tutorial, the main focus is to show how the OP-PIC API is used, hence the user may implement their own code for mesh loading.
 
-    int main() {
-        printf("Hello, World!\n");
-        return 0;
+Step 1 - Preparing to use OP-PIC
+-----------------------------
+
+First, include the following header files, then initialize OP-PIC and finalize it as follows:
+
+.. code-block:: c++
+    #include "opp_templates.h"
+    ...
+    ...
+    int main(int argc, char **argv) {
+        opp_init(argc, argv); //Initialise the OP-PIC library, passing runtime args
+        {
+            ...
+            ...
+            ...
+        }  
+        opp_exit(); //Finalising the OP-PIC library
     }
-
-::
-
-    # This is a basic code block
-    print("Hello from <span style="color:blue">a basic</span> code block!")
