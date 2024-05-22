@@ -113,31 +113,31 @@ A map created with a particle set is capable of changing its length during the s
 .. code-block:: C
 
   //declare data on sets
-    opp_dat c_det       = opp_decl_dat(cell_set, ALL_DET,     DT_REAL, m->c_det,      "c_det");  
-    opp_dat c_volume    = opp_decl_dat(cell_set, ONE,         DT_REAL, m->c_vol,      "c_volume");        
-    opp_dat c_ef        = opp_decl_dat(cell_set, DIM,         DT_REAL, m->c_ef,       "c_ef");
-    opp_dat c_sd        = opp_decl_dat(cell_set, N_PER_C*DIM, DT_REAL, m->c_sd,       "c_shape_deri"); 
-    opp_dat c_gbl_id    = opp_decl_dat(cell_set, ONE,         DT_INT,  m->c_id,       "c_gbl_id"); 
-    opp_dat c_colors    = opp_decl_dat(cell_set, ONE,         DT_INT,  m->c_col,      "c_colors");
-    opp_dat c_centroids = opp_decl_dat(cell_set, DIM,         DT_REAL, m->c_centroid, "c_centroids");
+    opp_dat c_det       = opp_decl_dat(cell_set, 16, DT_REAL, m->c_det,      "c_det");  
+    opp_dat c_volume    = opp_decl_dat(cell_set, 1,  DT_REAL, m->c_vol,      "c_volume");        
+    opp_dat c_ef        = opp_decl_dat(cell_set, 3,  DT_REAL, m->c_ef,       "c_ef");
+    opp_dat c_sd        = opp_decl_dat(cell_set, 12, DT_REAL, m->c_sd,       "c_shape_deri"); 
+    opp_dat c_gbl_id    = opp_decl_dat(cell_set, 1,  DT_INT,  m->c_id,       "c_gbl_id"); 
+    opp_dat c_colors    = opp_decl_dat(cell_set, 1,  DT_INT,  m->c_col,      "c_colors");
+    opp_dat c_centroids = opp_decl_dat(cell_set, 3,  DT_REAL, m->c_centroid, "c_centroids");
 
-    opp_dat n_volume     = opp_decl_dat(node_set, ONE, DT_REAL, m->n_vol,     "n_vol");        
-    opp_dat n_potential  = opp_decl_dat(node_set, ONE, DT_REAL, m->n_pot,     "n_potential");     
-    opp_dat n_charge_den = opp_decl_dat(node_set, ONE, DT_REAL, m->n_ion_den, "n_charge_den");
-    opp_dat n_pos        = opp_decl_dat(node_set, DIM, DT_REAL, m->n_pos,     "n_pos");     
-    opp_dat n_type       = opp_decl_dat(node_set, ONE, DT_INT,  m->n_type,    "n_type");
-    opp_dat n_bnd_pot    = opp_decl_dat(node_set, ONE, DT_REAL, m->n_bnd_pot, "n_bnd_pot");
+    opp_dat n_volume     = opp_decl_dat(node_set, 1, DT_REAL, m->n_vol,     "n_vol");        
+    opp_dat n_potential  = opp_decl_dat(node_set, 1, DT_REAL, m->n_pot,     "n_potential");     
+    opp_dat n_charge_den = opp_decl_dat(node_set, 1, DT_REAL, m->n_ion_den, "n_charge_den");
+    opp_dat n_pos        = opp_decl_dat(node_set, 3, DT_REAL, m->n_pos,     "n_pos");     
+    opp_dat n_type       = opp_decl_dat(node_set, 1, DT_INT,  m->n_type,    "n_type");
+    opp_dat n_bnd_pot    = opp_decl_dat(node_set, 1, DT_REAL, m->n_bnd_pot, "n_bnd_pot");
 
-    opp_dat if_v_norm  = opp_decl_dat(iface_set, DIM,          DT_REAL, m->if_v_norm, "iface_v_norm");
-    opp_dat if_u_norm  = opp_decl_dat(iface_set, DIM,          DT_REAL, m->if_u_norm, "iface_u_norm");
-    opp_dat if_norm    = opp_decl_dat(iface_set, DIM,          DT_REAL, m->if_norm,   "iface_norm");  
-    opp_dat if_area    = opp_decl_dat(iface_set, ONE,          DT_REAL, m->if_area,   "iface_area");
-    opp_dat if_distrib = opp_decl_dat(iface_set, ONE,          DT_INT,  m->if_dist,   "iface_dist");
-    opp_dat if_n_pos   = opp_decl_dat(iface_set, N_PER_IF*DIM, DT_REAL, m->if_n_pos,  "iface_n_pos");
+    opp_dat if_v_norm  = opp_decl_dat(iface_set, 3,  DT_REAL, m->if_v_norm, "iface_v_norm");
+    opp_dat if_u_norm  = opp_decl_dat(iface_set, 3,  DT_REAL, m->if_u_norm, "iface_u_norm");
+    opp_dat if_norm    = opp_decl_dat(iface_set, 3,  DT_REAL, m->if_norm,   "iface_norm");  
+    opp_dat if_area    = opp_decl_dat(iface_set, 1,  DT_REAL, m->if_area,   "iface_area");
+    opp_dat if_distrib = opp_decl_dat(iface_set, 1,  DT_INT,  m->if_dist,   "iface_dist");
+    opp_dat if_n_pos   = opp_decl_dat(iface_set, 12, DT_REAL, m->if_n_pos,  "iface_n_pos");
 
-    opp_dat p_pos   = opp_decl_dat(particle_set, DIM,     DT_REAL, nullptr, "p_position");
-    opp_dat p_vel   = opp_decl_dat(particle_set, DIM,     DT_REAL, nullptr, "p_velocity");
-    opp_dat p_lc    = opp_decl_dat(particle_set, N_PER_C, DT_REAL, nullptr, "p_lc");
+    opp_dat p_pos   = opp_decl_dat(particle_set, 3, DT_REAL, nullptr, "p_position");
+    opp_dat p_vel   = opp_decl_dat(particle_set, 3, DT_REAL, nullptr, "p_velocity");
+    opp_dat p_lc    = opp_decl_dat(particle_set, 4, DT_REAL, nullptr, "p_lc");
 
     opp_dat dp_rand = opp_decl_dat(dummy_part_set, 2, DT_REAL, nullptr, "dummy_part_rand");
 
@@ -148,13 +148,13 @@ Declaring them using the ``opp_decl_const<type>`` API call will indicate to the 
 .. code-block:: C
 
     //declare global constants
-    opp_decl_const<OPP_REAL>(ONE, &spwt,           "CONST_spwt");
-    opp_decl_const<OPP_REAL>(ONE, &ion_velocity,   "CONST_ion_velocity");
-    opp_decl_const<OPP_REAL>(ONE, &dt,             "CONST_dt");
-    opp_decl_const<OPP_REAL>(ONE, &plasma_den,     "CONST_plasma_den");
-    opp_decl_const<OPP_REAL>(ONE, &mass,           "CONST_mass");
-    opp_decl_const<OPP_REAL>(ONE, &charge,         "CONST_charge");
-    opp_decl_const<OPP_REAL>(ONE, &wall_potential, "CONST_wall_potential");
+    opp_decl_const<OPP_REAL>(1, &spwt,           "CONST_spwt");
+    opp_decl_const<OPP_REAL>(1, &ion_velocity,   "CONST_ion_velocity");
+    opp_decl_const<OPP_REAL>(1, &dt,             "CONST_dt");
+    opp_decl_const<OPP_REAL>(1, &plasma_den,     "CONST_plasma_den");
+    opp_decl_const<OPP_REAL>(1, &mass,           "CONST_mass");
+    opp_decl_const<OPP_REAL>(1, &charge,         "CONST_charge");
+    opp_decl_const<OPP_REAL>(1, &wall_potential, "CONST_wall_potential");
 
 Step 3 - First parallel loop : direct loop
 ------------------------------------------
