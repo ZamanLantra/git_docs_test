@@ -14,4 +14,4 @@ These pages provide detailed documentation on using OP-PIC, including an install
 Licencing
 ---------
 
-OP-PIC is released as an open-source project under the BSD 3-Clause License. See the `LICENSE <https://github.com/OP-DSL/OP-PIC/blob/main/LICENSE>` file for more information.
+OP-PIC is released as an open-source project under the BSD 3-Clause License. See the `LICENSE <https://github.com/OP-DSL/OP-PIC/blob/main/LICENSE>`_ file for more information.
