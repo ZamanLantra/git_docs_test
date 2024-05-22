@@ -167,8 +167,9 @@ Step 3 - Parallel loop : direct loop
 ------------------------------------------
 
 We can now convert a direct loop to use the OP-PIC API. 
+
 We have chosen ``compute_node_charge_density`` to demostrate a direct loop.
-It iterates over nodes, ``multiply node_charge_den`` with (``CONST_spwt`` / ``node_volume``) and saves to ``multiply node_charge_den``.
+It iterates over nodes, ``multiply node_charge_den`` with (``CONST_spwt`` / ``node_volume``) and saves to multiply ``node_charge_den``.
 
 .. code-block:: c++
 
@@ -184,9 +185,8 @@ To convert to the OP-PIC API we first outline the loop body (elemental kernel) t
 .. code-block:: c++
 
     //outlined elemental kernel
-    inline void compute_ncd_kernel(
-        double *node_charge_den, const double *node_volume) {
-        node_charge_den[0] *= (CONST_spwt[0] / node_volume[0]);
+    inline void compute_ncd_kernel(double *ncd, const double *nv) {
+        ncd[0] *= (CONST_spwt[0] / nv[0]);
     }
     //compute_node_charge_density : iterates over nodes
     for (int iteration = 0; iteration < (nnodes * 1); ++iteration) {
@@ -196,7 +196,10 @@ To convert to the OP-PIC API we first outline the loop body (elemental kernel) t
 Now we can directly declare the loop with the ``opp_par_loop`` API call:
 
 .. code-block:: c++
-
+    //outlined elemental kernel
+    inline void compute_ncd_kernel(double *ncd, const double *nv) {
+        ncd[0] *= (CONST_spwt[0] / nv[0]);
+    }
     opp_par_loop(compute_ncd_kernel, "compute_node_charge_density", node_set, OPP_ITERATE_ALL,
         opp_arg_dat(n_charge_den,  OPP_RW), 
         opp_arg_dat(n_volume,      OPP_READ));
