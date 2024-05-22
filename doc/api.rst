@@ -9,7 +9,7 @@ Key Concepts and Structure
 --------------------------
 
 OP-PIC C/C++ API
--------------
+----------------
 
 Initialisation and Termination
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
