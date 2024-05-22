@@ -97,7 +97,7 @@ In addition, a particles to cells mapping is required.
 This can be observed by the indirect access to data in each of the loops in the main iteration loops. 
 These connectivity information needs to be declared via the ``opp_decl_map`` API call:
 
-.. code-block:: C
+.. code-block:: c++
 
     //declare maps
     opp_map c2n_map  = opp_decl_map(cell_set,  node_set, 4, m->c_to_n, "c_v_n_map");
@@ -112,7 +112,7 @@ A map created with a particle set is capable of changing its length during the s
 
 **Declare data** - All data declared on sets should be declared using the ``opp_decl_dat`` API call. For FemPIC this consists of seven cell dats, six node dats, six inlet-face dats and three particle dats (+1 dummy particle dat).
 
-.. code-block:: C
+.. code-block:: c++
 
   //declare data on sets
     opp_dat c_det       = opp_decl_dat(cell_set, 16, DT_REAL, m->c_det,      "c_det");  
@@ -149,7 +149,7 @@ This is required due to the fact that when using code-generation later for paral
 Declaring them using the ``opp_decl_const<type>`` API call will indicate to the OP-PIC code-generator that these constants needs to be handled in a special way, generating code for copying them to the GPU for the relevant back-ends.
 The template types could be ``OPP_REAL``, ``OPP_INT``, ``OPP_BOOL``.
 
-.. code-block:: C
+.. code-block:: c++
 
     //declare global constants
     opp_decl_const<OPP_REAL>(1, &spwt,           "CONST_spwt");
@@ -160,9 +160,48 @@ The template types could be ``OPP_REAL``, ``OPP_INT``, ``OPP_BOOL``.
     opp_decl_const<OPP_REAL>(1, &charge,         "CONST_charge");
     opp_decl_const<OPP_REAL>(1, &wall_potential, "CONST_wall_potential");
 
-Step 3 - First parallel loop : direct loop
+The constants can be accessed in the kernels with the same literals used in the string name. 
+An example can be seen in the next section (Step 3).
+
+Step 3 - Parallel loop : direct loop
 ------------------------------------------
 
+We can now convert a direct loop to use the OP-PIC API. 
+We have chosen ``compute_node_charge_density`` to demostrate a direct loop.
+It iterates over nodes, ``multiply node_charge_den`` with (``CONST_spwt`` / ``node_volume``) and saves to ``multiply node_charge_den``.
+
+.. code-block:: c++
+
+    //compute_node_charge_density : iterates over nodes
+    for (int iteration = 0; iteration < (nnodes * 1); ++iteration) {
+        node_charge_den[iteration] *= (CONST_spwt[0] / node_volume[iteration]);
+    }
+
+This is a direct loops due to the fact that all data accessed in the computation are defined on the set that the loop iterates over. In this case the iteration set is nodes.
+
+To convert to the OP-PIC API we first outline the loop body (elemental kernel) to a subroutine:
+
+.. code-block:: c++
+
+    //outlined elemental kernel
+    inline void compute_ncd_kernel(
+        double *node_charge_den, const double *node_volume) {
+        node_charge_den[0] *= (CONST_spwt[0] / node_volume[0]);
+    }
+    //compute_node_charge_density : iterates over nodes
+    for (int iteration = 0; iteration < (nnodes * 1); ++iteration) {
+        compute_ncd_kernel(&node_charge_den[iteration], &node_volume[iteration]);
+    }
+
+Now we can directly declare the loop with the ``opp_par_loop`` API call:
+
+.. code-block:: c++
+
+    opp_par_loop(compute_ncd_kernel, "compute_node_charge_density", node_set, OPP_ITERATE_ALL,
+        opp_arg_dat(n_charge_den,  OPP_RW), 
+        opp_arg_dat(n_volume,      OPP_READ));
+
+Note how we have:
 
 
 
