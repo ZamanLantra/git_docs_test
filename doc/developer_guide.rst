@@ -37,6 +37,7 @@ Within these above mentioned loop, there is a special loop which will move parti
 Original - Load mesh and initialization
 ---------------------------------------
 The original code begins with allocating memory to hold the mesh data and then initializing them by reading in the mesh data, form the text file. 
+
 Go to the ``OP-PIC/app_fempic/fempic_misc_mesh_loader.h`` to see the complete mesh loader, where we use the original fempic code to read from file and store in the data storage class ``DataPointers``.
 
 .. code-block:: c++
@@ -64,3 +65,100 @@ First, include the following header files, then initialize OP-PIC and finalize i
         }  
         opp_exit(); //Finalising the OP-PIC library
     }
+
+Step 2 - OP-PIC Declaration
+---------------------------
+**Declare sets** - 
+The FemPIC application consists of three mesh element types (which we call sets): ``cells``, ``nodes``, and ``inlet-faces``. 
+These needs to be declared using the ``opp_decl_set`` API call together with the number of elements for each of these sets.
+In addition, FemPIC contains a particle set, that is defined using ``opp_decl_particle_set`` API call together with the number of particles and a mesh cell set. 
+
+The speciality of a particle set is that they can be resized (the set size can be increased or reduced during the simulation.
+In addition to the main particle set, we have used a temporary dummy particle set to hold some random data for particle injection initialization.
+
+.. code-block:: c++
+
+    // declare sets
+    opp_set node_set       = opp_decl_set(m->n_nodes, "mesh_nodes");
+    opp_set cell_set       = opp_decl_set(m->n_cells, "mesh_cells");
+    opp_set iface_set      = opp_decl_set(m->n_ifaces, "inlet_faces_cells");
+    opp_set particle_set   = opp_decl_particle_set("particles", cell_set); 
+    opp_set dummy_part_set = opp_decl_particle_set("dummy particles", cell_set);
+
+Later, we will see how the number of mesh elements can be read in directly from an hdf5 file using the ``opp_decl_set_hdf5`` and ``opp_decl_particle_set_hdf5`` call.
+
+When developing your own application with OP-PIC, or indeed converting an application to use OP-PIC, you will need to decide on what mesh element types, i.e. sets will need to be declared to define the full mesh. 
+A good starting point for this design is to see what mesh elements are used the loops over the mesh.
+
+**Declare maps** - Looking at the original Mini-FEM-PIC application's loops we see that mappings between cells and nodes, cells and cells, inlet-faces and nodes, inlet-faces and cells, and cells and nodes are required. 
+In addition, a particles to cells mapping is required. 
+This can be observed by the indirect access to data in each of the loops in the main iteration loops. 
+These connectivity information needs to be declared via the ``opp_decl_map`` API call:
+
+.. code-block:: C
+
+    //declare maps
+    opp_map c2n_map  = opp_decl_map(cell_set,  node_set, 4, m->c_to_n, "c_v_n_map");
+    opp_map c2c_map  = opp_decl_map(cell_set,  cell_set, 4, m->c_to_c,  "c_v_c_map"); 
+    opp_map if2c_map = opp_decl_map(iface_set, cell_set, 1, m->if_to_c, "if_v_c_map"); 
+    opp_map if2n_map = opp_decl_map(iface_set, node_set, 4, m->if_to_n, "if_v_n_map");
+
+    opp_map p2c_map  = opp_decl_map(particle_set, cell_set, 1, nullptr, "p2c_map");
+
+The ``opp_decl_map`` requires the names of the two sets for which the mapping is declared, its arity, mapping data (as in this case allocated in integer blocks of memory) and a string name.
+A map created with a particle set is capable of changing its length during the simulation and other maps are static.
+
+**Declare data** - All data declared on sets should be declared using the ``opp_decl_dat`` API call. For FemPIC this consists of seven cell dats, six node dats, six inlet-face dats and three particle dats (+1 dummy particle dat).
+
+.. code-block:: C
+
+  //declare data on sets
+    opp_dat c_det       = opp_decl_dat(cell_set, ALL_DET,     DT_REAL, m->c_det,      "c_det");  
+    opp_dat c_volume    = opp_decl_dat(cell_set, ONE,         DT_REAL, m->c_vol,      "c_volume");        
+    opp_dat c_ef        = opp_decl_dat(cell_set, DIM,         DT_REAL, m->c_ef,       "c_ef");
+    opp_dat c_sd        = opp_decl_dat(cell_set, N_PER_C*DIM, DT_REAL, m->c_sd,       "c_shape_deri"); 
+    opp_dat c_gbl_id    = opp_decl_dat(cell_set, ONE,         DT_INT,  m->c_id,       "c_gbl_id"); 
+    opp_dat c_colors    = opp_decl_dat(cell_set, ONE,         DT_INT,  m->c_col,      "c_colors");
+    opp_dat c_centroids = opp_decl_dat(cell_set, DIM,         DT_REAL, m->c_centroid, "c_centroids");
+
+    opp_dat n_volume     = opp_decl_dat(node_set, ONE, DT_REAL, m->n_vol,     "n_vol");        
+    opp_dat n_potential  = opp_decl_dat(node_set, ONE, DT_REAL, m->n_pot,     "n_potential");     
+    opp_dat n_charge_den = opp_decl_dat(node_set, ONE, DT_REAL, m->n_ion_den, "n_charge_den");
+    opp_dat n_pos        = opp_decl_dat(node_set, DIM, DT_REAL, m->n_pos,     "n_pos");     
+    opp_dat n_type       = opp_decl_dat(node_set, ONE, DT_INT,  m->n_type,    "n_type");
+    opp_dat n_bnd_pot    = opp_decl_dat(node_set, ONE, DT_REAL, m->n_bnd_pot, "n_bnd_pot");
+
+    opp_dat if_v_norm  = opp_decl_dat(iface_set, DIM,          DT_REAL, m->if_v_norm, "iface_v_norm");
+    opp_dat if_u_norm  = opp_decl_dat(iface_set, DIM,          DT_REAL, m->if_u_norm, "iface_u_norm");
+    opp_dat if_norm    = opp_decl_dat(iface_set, DIM,          DT_REAL, m->if_norm,   "iface_norm");  
+    opp_dat if_area    = opp_decl_dat(iface_set, ONE,          DT_REAL, m->if_area,   "iface_area");
+    opp_dat if_distrib = opp_decl_dat(iface_set, ONE,          DT_INT,  m->if_dist,   "iface_dist");
+    opp_dat if_n_pos   = opp_decl_dat(iface_set, N_PER_IF*DIM, DT_REAL, m->if_n_pos,  "iface_n_pos");
+
+    opp_dat p_pos   = opp_decl_dat(particle_set, DIM,     DT_REAL, nullptr, "p_position");
+    opp_dat p_vel   = opp_decl_dat(particle_set, DIM,     DT_REAL, nullptr, "p_velocity");
+    opp_dat p_lc    = opp_decl_dat(particle_set, N_PER_C, DT_REAL, nullptr, "p_lc");
+
+    opp_dat dp_rand = opp_decl_dat(dummy_part_set, 2, DT_REAL, nullptr, "dummy_part_rand");
+
+**Declare constants** - Finally global constants that are used in any of the computations in the loops needs to be declared.
+This is required due to the fact that when using code-generation later for parallelizations such as on GPUs (e.g. using CUDA or HIP), global constants needs to be copied over to the GPUs before they can be used in a GPU kernel. 
+Declaring them using the ``opp_decl_const<type>`` API call will indicate to the OP-PIC code-generator that these constants needs to be handled in a special way, generating code for copying them to the GPU for the relevant back-ends.
+
+.. code-block:: C
+
+    //declare global constants
+    opp_decl_const<OPP_REAL>(ONE, &spwt,           "CONST_spwt");
+    opp_decl_const<OPP_REAL>(ONE, &ion_velocity,   "CONST_ion_velocity");
+    opp_decl_const<OPP_REAL>(ONE, &dt,             "CONST_dt");
+    opp_decl_const<OPP_REAL>(ONE, &plasma_den,     "CONST_plasma_den");
+    opp_decl_const<OPP_REAL>(ONE, &mass,           "CONST_mass");
+    opp_decl_const<OPP_REAL>(ONE, &charge,         "CONST_charge");
+    opp_decl_const<OPP_REAL>(ONE, &wall_potential, "CONST_wall_potential");
+
+Step 3 - First parallel loop : direct loop
+------------------------------------------
+
+
+
+
