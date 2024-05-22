@@ -37,9 +37,9 @@ Within these above mentioned loop, there is a special loop which will move parti
 Original - Load mesh and initialization
 ---------------------------------------
 The original code begins with allocating memory to hold the mesh data and then initializing them by reading in the mesh data, form the text file. 
-Go to the ``app_fempic/fempic_misc_mesh_loader.h`` to see the complete mesh loader, where we use the original fempic code to read from file and store in the data storage class ``DataPointers``.
+Go to the ``OP-PIC/app_fempic/fempic_misc_mesh_loader.h`` to see the complete mesh loader, where we use the original fempic code to read from file and store in the data storage class ``DataPointers``.
 
-.. code-block:: C
+.. code-block:: c++
     std::shared_ptr<DataPointers> m = load_mesh();
 
 In this tutorial, the main focus is to show how the OP-PIC API is used, hence the user may implement their own code for mesh loading.
@@ -49,7 +49,14 @@ Step 1 - Preparing to use OP-PIC
 
 First, include the following header files, then initialize OP-PIC and finalize it as follows:
 
-.. code-block:: C
+.. code-block:: c++
+    #include <stdio.h>
+    int main() {
+        printf("Hello, World!\n");
+        return 0;
+    }
+
+.. code-block:: c++
     #include "opp_templates.h"
     ...
     ...
