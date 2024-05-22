@@ -110,6 +110,8 @@ These connectivity information needs to be declared via the ``opp_decl_map`` API
 The ``opp_decl_map`` requires the names of the two sets for which the mapping is declared, its arity, mapping data (as in this case allocated in integer blocks of memory) and a string name.
 A map created with a particle set is capable of changing its length during the simulation and other maps are static.
 
+Note that we have declared ``p2c_map`` with a ``nullptr`` since ``particle_set`` is defined without a particle count (i.e. zero), since we anticipate to inject particles during the simulation.
+
 **Declare data** - All data declared on sets should be declared using the ``opp_decl_dat`` API call. For FemPIC this consists of seven cell dats, six node dats, six inlet-face dats and three particle dats (+1 dummy particle dat).
 
 .. code-block:: c++
@@ -142,6 +144,8 @@ A map created with a particle set is capable of changing its length during the s
     opp_dat p_lc    = opp_decl_dat(particle_set, 4, DT_REAL, nullptr, "p_lc");
 
     opp_dat dp_rand = opp_decl_dat(dummy_part_set, 2, DT_REAL, nullptr, "dummy_part_rand");
+
+Note that we have declared particle dats with a ``nullptr`` since ``particle_set`` is defined without a particle count (i.e. zero), since we anticipate to inject particles during the simulation.
 
 **Declare constants** - Finally global constants that are used in any of the computations in the loops needs to be declared.
 This is required due to the fact that when using code-generation later for parallelizations such as on GPUs (e.g. using CUDA or HIP), global constants needs to be copied over to the GPUs before they can be used in a GPU kernel. 
@@ -201,6 +205,7 @@ Now we can directly declare the loop with the ``opp_par_loop`` API call:
     inline void compute_ncd_kernel(double *ncd, const double *nv) {
         ncd[0] *= (CONST_spwt[0] / nv[0]);
     }
+
     opp_par_loop(compute_ncd_kernel, "compute_node_charge_density", node_set, OPP_ITERATE_ALL,
         opp_arg_dat(n_charge_den,  OPP_RW), 
         opp_arg_dat(n_volume,      OPP_READ));
