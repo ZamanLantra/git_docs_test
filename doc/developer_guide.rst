@@ -196,6 +196,7 @@ To convert to the OP-PIC API we first outline the loop body (elemental kernel) t
 Now we can directly declare the loop with the ``opp_par_loop`` API call:
 
 .. code-block:: c++
+
     //outlined elemental kernel
     inline void compute_ncd_kernel(double *ncd, const double *nv) {
         ncd[0] *= (CONST_spwt[0] / nv[0]);
