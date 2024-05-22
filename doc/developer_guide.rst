@@ -39,3 +39,8 @@ Another example with C syntax highlighting:
         printf("Hello, World!\n");
         return 0;
     }
+
+::
+
+    # This is a basic code block
+    print("Hello from <span style="color:blue">a basic</span> code block!")
