@@ -530,7 +530,7 @@ Similar to other parallel loops, we outline the loop body and call it within the
 
         const double coeff = (1.0 / 6.0) / (cell_volume[0]);
         for (int i=0; i<4; i++) {
-            point_lc[i] = coeff * (cell_det[4 + 0] -
+            point_lc[i] = coeff * (cell_det[i * 4 + 0] -
                 cell_det[i * 4 + 1] * point_pos[0] +
                 cell_det[i * 4 + 2] * point_pos[1] -
                 cell_det[i * 4 + 3] * point_pos[2]);
@@ -590,7 +590,7 @@ Now, convert the loop to use the ``opp_particle_move`` API.
 
         const double coeff = (1.0 / 6.0) / (cell_volume[0]);
         for (int i=0; i<4; i++) {                            // <- (1)
-            point_lc[i] = coeff * (cell_det[4 + 0] -
+            point_lc[i] = coeff * (cell_det[i * 4 + 0] -
                 cell_det[i * 4 + 1] * point_pos[0] +
                 cell_det[i * 4 + 2] * point_pos[1] -
                 cell_det[i * 4 + 3] * point_pos[2]);
@@ -657,7 +657,7 @@ Additionally, if required deposit charge on nodes can be done at the place indic
 
 .. code-block:: c++
 
-    inline void move_particles_kernel(args ...) {
+    inline void move_kernel(args ...) {
         if (DO_ONCE) {
             /* any computation that should get executed only once */
         }
@@ -675,6 +675,12 @@ Additionally, if required deposit charge on nodes can be done at the place indic
         OPP_PARTICLE_NEED_MOVE;
         ...
     }
+
+Once ``opp_particle_move`` is executed, all the particles that were marked as ``OPP_PARTICLE_NEED_REMOVE`` will get removed according to the routine requested by the user in the config file (hole-fill, sort, shuffle or a mix of these).
+More details on configs will be in a later section.
+
+In addition, all the communications and synchronizations will also occur within ``opp_particle_move`` without any user intervention.
+
 
 Step 5 - Global reductions
 --------------------------
