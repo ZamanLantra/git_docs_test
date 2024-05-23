@@ -170,7 +170,7 @@ An example can be seen in the next section (Step 3).
 Step 3 - Parallel loop : ``opp_par_loop``
 ------------------------------------------
 
-direct loop
+Direct loop
 ~~~~~~~~~~~
 
 We can now convert a direct loop to use the OP-PIC API. 
@@ -214,8 +214,34 @@ Now we can directly declare the loop with the ``opp_par_loop`` API call:
         opp_arg_dat(n_volume,      OPP_READ));
 
 Note how we have:
+- indicated the elemental kernel ``compute_ncd_kernel`` in the first argument to ``opp_par_loop``.
+- used the ``opp_dat``s names ``n_charge_den`` and ``n_volume`` in the API call.
+- noted the iteration set ``node_set`` (3rd argument) and iteration type ``OPP_ITERATE_ALL`` (4th argument).
+- indicated the direct access of ``n_charge_den`` and ``n_volume`` without any mappings provided to ``opp_arg_dat``.
+- indicated that ``n_volume`` is read only (``OP_READ``) and ``n_charge_den`` is read & write (``OPP_RW``), by looking through the elemental kernel and identifying how they are used/accessed in the kernel.
+- given that ``n_volume`` is read only we also indicate this by the key word ``const`` for ``compute_ncd_kernel`` elemental kernel.
+- note that we have accessed a const value ``CONST_spwt`` that we declared using ``opp_decl_const<OPP_REAL>()`` API call.
 
-indirect loop (single indirection)
+Indirect loop (single indirection)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Example 1
+.. code-block:: c++
+
+    //outlined elemental kernel
+    inline void compute_ef_kernel(
+        double *cell_ef, const double *cell_sd, const double *node_pot0,
+        const double *node_pot1, const double *node_pot2, const double *node_pot3) {
+        for (int dim = 0; dim < 3; dim++) { 
+            cell_ef[dim] = cell_ef[dim] - 
+                ((cell_sd[0 * 3 + dim] * node_pot0[0])) + (cell_sd[1 * 3 + dim] * node_pot1[0])) +
+                (cell_sd[2 * 3 + dim] * node_pot2[0])) + (cell_sd[3 * 3 + dim] * node_pot3[0])));
+        }    
+    }
+
+    opp_par_loop(compute_ef_kernel, "compute_electric_field", cell_set, OPP_ITERATE_ALL,
+        opp_arg_dat(c_ef,                    OPP_INC), 
+        opp_arg_dat(c_sd,                    OPP_READ),
+        opp_arg_dat(n_potential, 0, c2n_map, OPP_READ),
+        opp_arg_dat(n_potential, 1, c2n_map, OPP_READ),
+        opp_arg_dat(n_potential, 2, c2n_map, OPP_READ),
+        opp_arg_dat(n_potential, 3, c2n_map, OPP_READ));
