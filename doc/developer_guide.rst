@@ -693,8 +693,7 @@ Note that, allthough, direct_hop reduces unnecessary computations and communicat
 .. image:: image_direct_hop.png
    :height: 250px
 
-However, this mechanism can only be used in algorithms when it is not required to deposit contributions to all the passing cells during the particle movement. 
-
+This mechanism can only be used in algorithms when it is not required to deposit contributions to all the passing cells during the particle movement. 
 Hence, for the applications we tested, ``DH`` can be directly used for electro-static PIC codes, while electo-magnetic PIC codes require deposition of current to each passing cell.
 
 To enable ``DH``, the user should call the API ``opp_init_direct_hop``, with the grid spacing (resolution) required in ``DH`` search scheme, dimension of the simulation (1D, 2D or 3D), a global cell index ``opp_dat`` (mainly required to translate cell indices in an MPI code simulation) and a ``opp::BoundingBox`` indicating the simulation boundaries.
