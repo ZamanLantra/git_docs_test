@@ -482,7 +482,7 @@ To explain this, we use the FemPIC particle move routine.
             if (!(p_lc[4 * iter + 0] < 0.0 || p_lc[4 * iter + 0] > 1.0 ||
                   p_lc[4 * iter + 1] < 0.0 || p_lc[4 * iter + 1] > 1.0 ||
                   p_lc[4 * iter + 2] < 0.0 || p_lc[4 * iter + 2] > 1.0 ||
-                  p_lc[4 * iter + 3] < 0.0 || p_lc[4 * iter + 3] > 1.0)) { // within the current cell
+                  p_lc[4 * iter + 3] < 0.0 || p_lc[4 * iter + 3] > 1.0)) { // within current cell
                 search_next_cell = false;
             }
             else { // outside the last known cell
@@ -501,7 +501,8 @@ To explain this, we use the FemPIC particle move routine.
                     search_next_cell = true;
                 }
                 else {
-                    // No neighbour cell to search next, particle out of domain, Mark and remove from simulation!!!
+                    // No neighbour cell to search next, particle out of domain, 
+                    // Mark and remove from simulation!!!
                     p2c_map[iter] = INT_MAX; 
                     search_next_cell = false;
                 }
@@ -560,7 +561,8 @@ Similar to other parallel loops, we outline the loop body and call it within the
             search_next_cell = true;
         }
         else {
-            // No neighbour cell to search next, particle out of domain, Mark and remove from simulation!!!
+            // No neighbour cell to search next, particle out of domain, 
+            // Mark and remove from simulation!!!
             p2c[0] = INT_MAX; 
             search_next_cell = false;
         } 
@@ -622,7 +624,8 @@ Now, convert the loop to use the ``opp_particle_move`` API.
             OPP_PARTICLE_NEED_MOVE;
         }
         else {                                               // <- (4)
-            // No neighbour cell to search next, particle out of domain, Mark and remove from simulation!!!
+            // No neighbour cell to search next, particle out of domain, 
+            // Mark and remove from simulation!!!
             opp_p2c[0] = INT_MAX; 
             OPP_PARTICLE_NEED_REMOVE;
         }
@@ -636,10 +639,10 @@ Now, convert the loop to use the ``opp_particle_move`` API.
 
 Note how we have:
 
-- indicated the elemental kernel ``move_kernel`` in the first argument to ``opp_par_loop``
+- indicated the elemental kernel ``move_kernel`` in the first argument to ``opp_particle_move`` loop.
 - used particles_set as the iterating set and provided cell to cell mapping ``c2c_map`` and particle to cell mapping ``p2c_map`` as 4th and 5th arguments of the ``opp_particle_move`` API call.
-- providing ``c2c_map`` and ``p2c_map`` will allow us to use them within the elemental kernel, using ``opp_c2c`` and ``opp_p2c`` pointers, without the need to explicitly pass as kernel arguments
-- direct, indirect, or double indirect mappings can be provided as opp_arg_dats similar to ``opp_par_loop`` (double indirection not present here).
+- by providing ``c2c_map`` and ``p2c_map``, they are accessed within the elemental kernel, using ``opp_c2c`` and ``opp_p2c`` pointers, without the need to explicitly pass as kernel arguments.
+- direct, indirect, or double indirect mappings can be provided as opp_arg_dats similar to ``opp_par_loop`` (double indirection not present in this example).
 - ``OPP_PARTICLE_MOVE_DONE``, ``OPP_PARTICLE_NEED_MOVE`` and ``OPP_PARTICLE_NEED_REMOVE`` pre-processor statements can be used to indicate the code-generator about the particle move status.
 
 To summarize, the elemental kernel over all particles will require:
@@ -650,7 +653,7 @@ To summarize, the elemental kernel over all particles will require:
 (4) actions to be carry out if the particle has moved out of the mesh domain; 
 (5) calculate the next most probable cell index to search.
 
-In additon to above, a user can provide a code-block to be executed only once per particle (during the first iteration of the do while loop) using the pre-processor directive ``DO_ONCE``. 
+In additon to above, a user can provide a code-block to be executed only once per particle (during the first iteration of the do while loop) using the pre-processor directive ``OPP_DO_ONCE``. 
 This will be beneficial if the move kernel is required to include the code to calculate position and velocity (rather than a separate ``opp_par_loop`` like in FemPIC).
 
 Additionally, if required deposit charge on nodes can be done at the place indicated by (3) in the elemental kernel.
@@ -658,7 +661,7 @@ Additionally, if required deposit charge on nodes can be done at the place indic
 .. code-block:: c++
 
     inline void move_kernel(args ...) {
-        if (DO_ONCE) {
+        if (OPP_DO_ONCE) {
             /* any computation that should get executed only once */
         }
         /* computation per mesh elment for particle */
@@ -679,18 +682,20 @@ Additionally, if required deposit charge on nodes can be done at the place indic
 Once ``opp_particle_move`` is executed, all the particles that were marked as ``OPP_PARTICLE_NEED_REMOVE`` will get removed according to the routine requested by the user in the config file (hole-fill, sort, shuffle or a mix of these).
 More details on configs will be in a later section.
 
-In addition, all the communications and synchronizations will also occur within ``opp_particle_move`` without any user intervention.
+In addition, in an MPI and/or GPU target, all the communications and synchronizations will occur within ``opp_particle_move`` without any user intervention.
 
-This ``Multi-hop`` approach performance is degraded when particles are moved to a far away cell, making this algorithm to hop for long.
+Eventhough, ``Multi-hop`` approach performs when particles move to closer cells, its performance is degraded when particles are moved to a far away cell, making it to hop for long.
+
 To address this issue of fast moving particles, OP-PIC incorporates a ``Direct-hop (DH)`` mechanism, where the particles are moved directly to a cell closer to the final destination, and then switches to ``multi-hop`` mode to move it to the correct final destination.
+
+Note that, allthough, direct_hop reduces unnecessary computations and communications significantly, a higher memory footprint is required for bookkeeping.
 
 .. image:: image_direct_hop.png
    :height: 250px
 
-Even though, direct_hop reduces unnecessary computations and communications significantly, a higher memory footprint is required for bookkeeping.
-
 However, this mechanism can only be used in algorithms when it is not required to deposit contributions to all the passing cells during the particle movement. 
-Hence, for the applications we tested ``DH`` can be directly used for electro-static PIC codes, while electo-magnetic PIC codes require deposition of current to each passing cell.
+
+Hence, for the applications we tested, ``DH`` can be directly used for electro-static PIC codes, while electo-magnetic PIC codes require deposition of current to each passing cell.
 
 To enable ``DH``, the user should call the API ``opp_init_direct_hop``, with the grid spacing (resolution) required in ``DH`` search scheme, dimension of the simulation (1D, 2D or 3D), a global cell index ``opp_dat`` (mainly required to translate cell indices in an MPI code simulation) and a ``opp::BoundingBox`` indicating the simulation boundaries.
 
@@ -698,11 +703,17 @@ To enable ``DH``, the user should call the API ``opp_init_direct_hop``, with the
 
     opp_init_direct_hop(grid_spacing, DIM, c_gbl_id, bounding_box);
 
-The bounding box can be created by providing a mesh dat that has its positions (like node positions), ``opp::BoundingBox(const opp_dat pos_dat, int dim)`` or simply by providing the calculated minimum and maximum domain coordinates using ``opp::BoundingBox(int dim, opp_point minCoordinate, opp_point maxCoordinate)``.
+The bounding box can be created by providing a mesh dat that has its positions (like node positions) using: 
 
-Once ``opp_init_direct_hop`` is called, the code-generator will extract the required information from ``opp_particle_move`` API call, generate the initilizing code for the additional data structures required for ``DH `` and change the internal do while loop to incorporate the additional DH algorithms.
+``opp::BoundingBox(const opp_dat pos_dat, int dim)`` 
 
-However, even with an application having ``DH`` code generated and compiled, a user may wish to disable ``DH`` during runtime with no additional performance degradation to ``MH`` using a config (discussed later).
+or simply by providing the calculated minimum and maximum domain coordinates using: 
+
+``opp::BoundingBox(int dim, opp_point minCoordinate, opp_point maxCoordinate)``.
+
+Once ``opp_init_direct_hop`` API is called, the code-generator will extract the required information from ``opp_particle_move`` API call, generate the initilizing code for the additional data structures required for ``DH`` and change the internal do while loop to incorporate the additional DH algorithms.
+
+However, even with an application having ``DH`` code generated and compiled, a user may wish to disable ``DH`` during runtime with no additional performance degradation to ``MH``, using a config (discussed later).
 
 Step 5 - Global reductions
 --------------------------
