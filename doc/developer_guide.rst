@@ -923,7 +923,7 @@ Add the OP-PIC partitioner call ``opp_partition`` to the code in order to signal
     ...
     ...
 
-See the API documentation for practitioner options. 
+See the API documentation for partitioner options. 
 In this case no special custom partitioning scheme is used to minimize particle communications.
 That is done by the enrichment of ``c_colors`` within a user written fempic_color_block function (OP-PIC/app_fempic/fempic_misc_mesh_colour.h).
 
