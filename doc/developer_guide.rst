@@ -229,8 +229,8 @@ Indirect loop (single indirection)
 We have selected two loops in FemPIC to demonstrate single indirections. 
 
 First, we use ``compute_electric_field`` calculation to showcase the mesh set to mesh set mapping indirections.
-Here we iterate over cells set, access node potentials through indirect accesses using c2n_map.
-Note that one cell in FemPIC is linked with 4 surrounding nodes and n_potential has a dimension of one.
+Here we iterate over cells set, access node potentials through indirect accesses using ``c2n_map``.
+Note that one cell in FemPIC is linked with 4 surrounding nodes and ``n_potential`` has a dimension of one.
 
 .. code-block:: c++
 
@@ -300,12 +300,12 @@ Now, convert the loop to use the opp_par_loop API:
         opp_arg_dat(n_potential, 2, c2n_map, OPP_READ),
         opp_arg_dat(n_potential, 3, c2n_map, OPP_READ));
 
-Note in this case how the indirections are specified using the mapping declared as ``opp_map`` c2n_map, indicating the to-set index (2nd argument), and access mode OPP_READ.
+Note in this case how the indirections are specified using the mapping declared as ``opp_map`` ``c2n_map``, indicating the to-set index (2nd argument), and access mode ``OPP_READ``.
 That is, the thrid argument of the ``opp_par_loop`` is a read-only argument mapped from cells to nodes using the mapping at the 0th index of c2n_map (i.e. 1st mapping out of 4 nodes attached).
-Likewise, the fourth argument of ``opp_par_loop`` is mapped from cells to nodes using the mapping at the 1th index of c2n_map (i.e. 2nd mapping out of 4 nodes attached) and so on.
+Likewise, the fourth argument of ``opp_par_loop`` is mapped from cells to nodes using the mapping at the 1th index of ``c2n_map`` (i.e. 2nd mapping out of 4 nodes attached) and so on.
 
 Second, we use ``calculate_new_pos_vel`` calculation to showcase the particle set to mesh set mapping indirections.
-Here we iterate over particles set, access cell electric fields through indirect accesses using p2c_map.
+Here we iterate over particles set, access cell electric fields through indirect accesses using ``p2c_map``.
 Note that one particle in FemPIC can be linked with only only one cell.
 
 .. code-block:: c++
@@ -360,8 +360,25 @@ Now, convert the loop to use the opp_par_loop API:
         opp_arg_dat(p_pos,         OPP_WRITE),
         opp_arg_dat(p_vel,         OPP_WRITE));
 
-Note in this case how the indirections are specified using the mapping declared as ``opp_map`` p2c_map, and access mode OPP_READ.
+Note in this case how the indirections are specified using the mapping declared as ``opp_map`` ``p2c_map``, and access mode ``OPP_READ``.
 That is, the first argument of the ``opp_par_loop`` is a read-only argument mapped from particles to cells, however a mapping index is not required since always particles to cells mapping has a dimension of one.
 
+Double Indirect loop
+~~~~~~~~~~~~~~~~~~~~
 
+There could be instances where double indirection is required. 
+For example in ``deposit_charge_on_nodes``, we may need to deposit charge from particles to nodes, but from particles we have a single mapping towards the cells, with another mapping from cells to nodes.
+
+Note that one cell in FemPIC is linked with 4 surrounding nodes and ``n_charge_den`` has a dimension of one.
+
+
+
+
+Step 4 - Move loop : ``opp_particle_move``
+------------------------------------------
+
+
+
+Step 5 - Global reductions
+--------------------------
 
