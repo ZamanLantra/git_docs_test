@@ -167,8 +167,11 @@ The template types could be ``OPP_REAL``, ``OPP_INT``, ``OPP_BOOL``.
 The constants can be accessed in the kernels with the same literals used in the string name. 
 An example can be seen in the next section (Step 3).
 
-Step 3 - Parallel loop : direct loop
+Step 3 - Parallel loop : ``opp_par_loop``
 ------------------------------------------
+
+direct loop
+~~~~~~~~~~~
 
 We can now convert a direct loop to use the OP-PIC API. 
 
@@ -212,5 +215,7 @@ Now we can directly declare the loop with the ``opp_par_loop`` API call:
 
 Note how we have:
 
+indirect loop (single indirection)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
+Example 1
