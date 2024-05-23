@@ -276,7 +276,7 @@ Similar to the direct loop, we outline the loop body and call it within the loop
             &n_potential[1 * map2idx], &n_potential[1 * map3idx], &n_potential[1 * map4idx]);
     }
 
-Now, convert the loop to use the opp_par_loop API:
+Now, convert the loop to use the ``opp_par_loop`` API:
 
 .. code-block:: c++
 
@@ -341,7 +341,7 @@ Then, we outline the loop body and call it within the loop as follows:
         calc_pos_vel_kernel(&c_ef[3 * p2c], &p_pos[3 * iter], &p_vel[3 * iter]);
     }
 
-Now, convert the loop to use the opp_par_loop API:
+Now, convert the loop to use the ``opp_par_loop`` API:
 
 .. code-block:: c++
 
@@ -418,7 +418,7 @@ Similarly, we outline the loop body and call it within the loop as follows:
             &n_charge_den[1 * map3idx], &n_charge_den[1 * map4idx]);
     }
 
-Now, convert the loop to use the opp_par_loop API:
+Now, convert the loop to use the ``opp_par_loop`` API:
 
 .. code-block:: c++
 
@@ -519,7 +519,7 @@ This will have benefits of better cache usage, since all particles that maps to 
 One other option is to shuffle the particles, while shifting the particles with ``INT_MAX`` p2c mapping to the end of the data structure. 
 The benefits of doing so in device implementations are elaborated in the Optimization section.
 
-Similarly, we outline the loop body and call it within the loop as follows:
+Similar to other parallel loops, we outline the loop body and call it within the loop as follows:
 
 .. code-block:: c++
 
@@ -536,32 +536,33 @@ Similarly, we outline the loop body and call it within the loop as follows:
                 cell_det[i * 4 + 3] * point_pos[2]);
         }
     
-        if (!(p_lc[0] < 0.0 || p_lc[0] > 1.0 ||
-              p_lc[1] < 0.0 || p_lc[1] > 1.0 ||
-              p_lc[2] < 0.0 || p_lc[2] > 1.0 ||
-              p_lc[3] < 0.0 || p_lc[3] > 1.0)) { // within the current cell
+        if (!(point_lc[0] < 0.0 || point_lc[0] > 1.0 ||
+              point_lc[1] < 0.0 || point_lc[1] > 1.0 ||
+              point_lc[2] < 0.0 || point_lc[2] > 1.0 ||
+              point_lc[3] < 0.0 || point_lc[3] > 1.0)) { // within the current cell
             search_next_cell = false;
+            return;
         }
-        else { // outside the last known cell
-            int min_i = 0;
-            double min_lc = p_lc[0];
         
-            for (int i=1; i < 4; i++) { // find most negative weight
-                if (p_lc[i] < min_lc) {
-                    min_lc = p_lc[i];
-                    min_i = i;
-                }
+        // outside the last known cell
+        int min_i = 0;
+        double min_lc = point_lc[0];
+    
+        for (int i=1; i < 4; i++) { // find most negative weight
+            if (point_lc[i] < min_lc) {
+                min_lc = point_lc[i];
+                min_i = i;
             }
-        
-            if (c2c[min_i] >= 0) { // is there a neighbor in this direction?
-                p2c[0] = c2c[min_i];
-                search_next_cell = true;
-            }
-            else {
-                // No neighbour cell to search next, particle out of domain, Mark and remove from simulation!!!
-                p2c[0] = INT_MAX; 
-                search_next_cell = false;
-            }
+        }
+    
+        if (c2c[min_i] >= 0) { // is there a neighbor in this direction?
+            p2c[0] = c2c[min_i];
+            search_next_cell = true;
+        }
+        else {
+            // No neighbour cell to search next, particle out of domain, Mark and remove from simulation!!!
+            p2c[0] = INT_MAX; 
+            search_next_cell = false;
         } 
     }
     //move_particles : iterates over cells
@@ -579,23 +580,101 @@ Similarly, we outline the loop body and call it within the loop as follows:
         } while (search_next_cell)
     }
 
+Now, convert the loop to use the ``opp_particle_move`` API.
 
+.. code-block:: c++
 
+    //outlined elemental kernel
+    inline void move_kernel(const double *point_pos, double* point_lc,
+            const double *cell_volume, const double *cell_det) {
 
+        const double coeff = (1.0 / 6.0) / (cell_volume[0]);
+        for (int i=0; i<4; i++) {                            // <- (1)
+            point_lc[i] = coeff * (cell_det[4 + 0] -
+                cell_det[i * 4 + 1] * point_pos[0] +
+                cell_det[i * 4 + 2] * point_pos[1] -
+                cell_det[i * 4 + 3] * point_pos[2]);
+        }
+    
+        if (!(point_lc[0] < 0.0 || point_lc[0] > 1.0 ||      // <- (2)
+              point_lc[1] < 0.0 || point_lc[1] > 1.0 ||
+              point_lc[2] < 0.0 || point_lc[2] > 1.0 ||
+              point_lc[3] < 0.0 || point_lc[3] > 1.0)) { // within the current cell
+            // no additional computations in FemPIC          // <- (3)
+            OPP_PARTICLE_MOVE_DONE;
+            return;
+        }
+        
+        // outside the last known cell
+        int min_i = 0;
+        double min_lc = p_lc[0];
+    
+        for (int i=1; i < 4; i++) { // find most negative weight
+            if (point_lc[i] < min_lc) {
+                min_lc = point_lc[i];
+                min_i = i;
+            }
+        }
 
+        // is there a neighbor in this direction?
+        if (opp_c2c[min_i] >= 0) { 
+            opp_p2c[0] = opp_c2c[min_i];                     // <- (5)
+            OPP_PARTICLE_NEED_MOVE;
+        }
+        else {                                               // <- (4)
+            // No neighbour cell to search next, particle out of domain, Mark and remove from simulation!!!
+            opp_p2c[0] = INT_MAX; 
+            OPP_PARTICLE_NEED_REMOVE;
+        }
+    }
 
+    opp_particle_move(move_kernel, "move", particle_set, c2c_map, p2c_map,
+        opp_arg_dat(p_pos,             OPP_READ),
+        opp_arg_dat(p_lc,              OPP_WRITE),
+        opp_arg_dat(c_volume, p2c_map, OPP_READ),
+        opp_arg_dat(c_det,    p2c_map, OPP_READ));
 
-OP-PIC can declare a particle move as a special loop over particles as illustrated in Figure 6. 
+Note how we have:
 
-The elemental kernel over all particles will require:
-(1) specifying computations to be carried out for each mesh element,
-e.g., cells, along the path of the particle, until its final destination
-cell; (2) a method to identify if the particle has reached its final
-mesh cell; (3) computations to be carried out at the final destination
-mesh cell; (4) actions to be carry out if the particle has moved
-out of the mesh domain; and, (5) calculate the next most probable
-cell index to search.
+- indicated the elemental kernel ``move_kernel`` in the first argument to ``opp_par_loop``
+- used particles_set as the iterating set and provided cell to cell mapping ``c2c_map`` and particle to cell mapping ``p2c_map`` as 4th and 5th arguments of the ``opp_particle_move`` API call.
+- providing ``c2c_map`` and ``p2c_map`` will allow us to use them within the elemental kernel, using ``opp_c2c`` and ``opp_p2c`` pointers, without the need to explicitly pass as kernel arguments
+- direct, indirect, or double indirect mappings can be provided as opp_arg_dats similar to ``opp_par_loop`` (double indirection not present here).
+- ``OPP_PARTICLE_MOVE_DONE``, ``OPP_PARTICLE_NEED_MOVE`` and ``OPP_PARTICLE_NEED_REMOVE`` pre-processor statements can be used to indicate the code-generator about the particle move status.
 
+To summarize, the elemental kernel over all particles will require:
+
+(1) specifying computations to be carried out for each mesh element, e.g., cells, along the path of the particle, until its final destination cell; 
+(2) a method to identify if the particle has reached its final mesh cell; 
+(3) computations to be carried out at the final destination mesh cell; 
+(4) actions to be carry out if the particle has moved out of the mesh domain; 
+(5) calculate the next most probable cell index to search.
+
+In additon to above, a user can provide a code-block to be executed only once per particle (during the first iteration of the do while loop) using the pre-processor directive ``DO_ONCE``. 
+This will be beneficial if the move kernel is required to include the code to calculate position and velocity (rather than a separate ``opp_par_loop`` like in FemPIC).
+
+Additionally, if required deposit charge on nodes can be done at the place indicated by (3) in the elemental kernel.
+
+.. code-block:: c++
+
+    inline void move_particles_kernel(args ...) {
+        if (DO_ONCE) {
+            /* any computation that should get executed only once */
+        }
+        /* computation per mesh elment for particle */
+        ...
+        /* check condition for final destination */
+        ...
+        /* if final destination element - final computation*/
+        OPP_PARTICLE_DONE_MOVE;
+        ...
+        /* else if out of domain*/
+        OPP_PARTICLE_NEED_REMOVE;
+        ...
+        /* else - not final destination element - calculate next cell & move further*/
+        OPP_PARTICLE_NEED_MOVE;
+        ...
+    }
 
 Step 5 - Global reductions
 --------------------------
