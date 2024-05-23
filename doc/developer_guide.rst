@@ -457,21 +457,21 @@ It loop over each particle and “track” its movement from cell to cell by com
 This entails an inner loop per particle which will terminate when the final destination cell is reached.
 
 .. image:: image_multi_hop.png
-   :height: 100px
+   :height: 250px
 
 To explain this, we use the FemPIC particle move routine.
 
 .. code-block:: c++
 
-    //deposit_charge_on_nodes : iterates over cells
+    //move_particles : iterates over cells
     for (int iter = 0; iter < nparticles; ++iter) {
 
         bool search_next_cell = true;
         do {
             const int p2c = p2c_map[iter];
-            const int c2c = c2c_map[iter];
+            const int c2c = c2c_map[4 * p2c];
 
-            const double coeff = (1.0 / 6.0) / (cell_volume[1 * p2c]);
+            const double coeff = (1.0 / 6.0) / (c_volume[1 * p2c]);
             for (int i=0; i<4; i++) {
                 p_lc[4 * iter + i] = coeff * (c_det[16 * p2c + i * 4 + 0] -
                     c_det[16 * p2c + i * 4 + 1] * p_pos[3 * iter + 0] +
@@ -519,6 +519,65 @@ This will have benefits of better cache usage, since all particles that maps to 
 One other option is to shuffle the particles, while shifting the particles with ``INT_MAX`` p2c mapping to the end of the data structure. 
 The benefits of doing so in device implementations are elaborated in the Optimization section.
 
+Similarly, we outline the loop body and call it within the loop as follows:
+
+.. code-block:: c++
+
+    //outlined elemental kernel
+    inline void move_kernel(bool& search_next_cell, int* p2c, const int* c2c,
+            const double *point_pos, double* point_lc,
+            const double *cell_volume, const double *cell_det) {
+
+        const double coeff = (1.0 / 6.0) / (cell_volume[0]);
+        for (int i=0; i<4; i++) {
+            point_lc[i] = coeff * (cell_det[4 + 0] -
+                cell_det[i * 4 + 1] * point_pos[0] +
+                cell_det[i * 4 + 2] * point_pos[1] -
+                cell_det[i * 4 + 3] * point_pos[2]);
+        }
+    
+        if (!(p_lc[0] < 0.0 || p_lc[0] > 1.0 ||
+              p_lc[1] < 0.0 || p_lc[1] > 1.0 ||
+              p_lc[2] < 0.0 || p_lc[2] > 1.0 ||
+              p_lc[3] < 0.0 || p_lc[3] > 1.0)) { // within the current cell
+            search_next_cell = false;
+        }
+        else { // outside the last known cell
+            int min_i = 0;
+            double min_lc = p_lc[0];
+        
+            for (int i=1; i < 4; i++) { // find most negative weight
+                if (p_lc[i] < min_lc) {
+                    min_lc = p_lc[i];
+                    min_i = i;
+                }
+            }
+        
+            if (c2c[min_i] >= 0) { // is there a neighbor in this direction?
+                p2c[0] = c2c[min_i];
+                search_next_cell = true;
+            }
+            else {
+                // No neighbour cell to search next, particle out of domain, Mark and remove from simulation!!!
+                p2c[0] = INT_MAX; 
+                search_next_cell = false;
+            }
+        } 
+    }
+    //move_particles : iterates over cells
+    for (int iter = 0; iter < nparticles; ++iter) {
+
+        bool search_next_cell = true;
+        do {
+            const int* p2c = &p2c_map[iter];
+            const int* c2c = &c2c_map[4 * p2c[0]];
+
+            move_kernel(search_next_cell, p2c, c2c,
+                &p_pos[3 * iter], p_lc[16 * iter],
+                &c_volume[1 * p2c[0]], &c_det[1 * p2c[0]]);
+
+        } while (search_next_cell)
+    }
 
 
 
