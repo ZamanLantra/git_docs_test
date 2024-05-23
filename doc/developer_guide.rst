@@ -722,43 +722,47 @@ In PIC simulations, particles can be initialized during setup stage, or can be i
 This particle injections imposes performance implications, since frequent reallocations takes time, especially in device code. 
 To avoid this, OP-PIC introduces a new config ``opp_allocation_multiple`` (double) to pre-allocate the set with a multiple of its intended allocation size.
 
-For example, if ``opp_allocation_multiple=10`` and if the particle injection size is 5,000, it will allocate space for 50,000 particles by making ``particle_set->set_capacity`` to 50,000 while maintaining ``particle_set->size`` at 5,000.
-Hence during the injection of the second iteration of the main loop (assume 5,000 again), it will simply make the ``particle_set->size`` to 10,000.
+For example, if ``opp_allocation_multiple=10`` and if the ``parts_to_insert`` is 5,000, it will allocate space for 50,000 particles, making ``particle_set->set_capacity`` to 50,000 while maintaining ``particle_set->size`` at 5,000.
+
+Hence during the injection of the second iteration of the main loop (assume ``parts_to_insert`` as 5,000 again), it will simply make the ``particle_set->size`` to 10,000.
 
 (a) Allocate space for particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-To allocate new particles, the API ``opp_increase_particle_count`` can be used. This will require the particle set to allocate and num_particles_to_insert. 
+To allocate new particles, the API ``opp_increase_particle_count`` can be used. This will require the particle set to allocate and number of particles to insert. 
 
 .. code-block:: c++
 
-    void opp_increase_particle_count(opp_set particles_set, const int num_particles_to_insert)
-
-.. code-block:: c++
-
-    void opp_inc_part_count_with_distribution(opp_set particles_set, int num_particles_to_insert, opp_dat part_dist)
+    void opp_increase_particle_count(opp_set p_set, int parts_to_insert)
 
 Another API to inject particles is by, that requires particle distribution ``opp_dat``.
 The part_dist dat should include the particle distribution per cell, and the ``p2c_map`` of the particle set will get enriched with the appropriate cell index.
 
+.. code-block:: c++
+
+    void opp_inc_part_count_with_distribution(opp_set p_set, int parts_to_insert, opp_dat part_dist)
+
 As an example, consider a mesh with 10 cells:
 
-+------------------------+---+---+---+---+---+---+---+---+---+---+
-| cell index ->          | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
-+------------------------+---+---+---+---+---+---+---+---+---+---+
-| particles per cell ->  |10 |11 |10 | 9 | 7 | 7 |10 |12 | 9 |10 |
-+------------------------+---+---+---+---+---+---+---+---+---+---+
-| part_dist opp_dat ->   |10 |21 |31 |40 |47 |54 |64 |76 |85 |95 |
-+------------------------+---+---+---+---+---+---+---+---+---+---+
++---------------------------+---+---+---+---+---+---+---+---+---+---+
+| cell index                | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
++---------------------------+---+---+---+---+---+---+---+---+---+---+
+| inject particles per cell |10 |11 |10 | 9 | 7 | 7 |10 |12 | 9 |10 |
++---------------------------+---+---+---+---+---+---+---+---+---+---+
+| part_dist opp_dat         |10 |21 |31 |40 |47 |54 |64 |76 |85 |95 |
++---------------------------+---+---+---+---+---+---+---+---+---+---+
 
-Since the mesh is unstructured mesh with different volumes, particles per cell will vary and part_dist ``opp_dat`` should have the particle counts as above (own particles + all particles prior to current cell index).
-Providing this part_dist to ``opp_inc_part_count_with_distribution`` API call will enrich the particle's ``p2c_map`` of first 10 particles with value 0, next 11 particles with value 1, following 10 particles wit value 2 and so on.
+Since the mesh is unstructured mesh with different volumes, particles per cell can vary and part_dist ``opp_dat`` should have the particle counts as above (own particles + all particles prior to current cell index).
 
-This will be beneficial in some cases where cell specific values needs to be enriched in initializing particles.
+Providing this part_dist to ``opp_inc_part_count_with_distribution`` API call will enrich the ``p2c_map`` of first 10 particles with value 0, next 11 particles with value 1, following 10 particles wit value 2 and so on.
+
+This will be beneficial in some cases where cell specific values needs to be pre-known prior initializing particles (e.g. to get ``cell_ef`` to enrich ``p_vel``).
 
 (b) Initialize the injected particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In order to initialize the injected particles, we can use ``opp_par_loop`` with iteration type of ``OPP_ITERATE_INJECTED``. 
-This will allow iterating only the particles that are newly injected. However, once an ``opp_move_particle`` loop is executed, these particles will no longer be newly injected, hence a loop with ``OPP_ITERATE_INJECTED`` will not iterate any.
+This will allow iterating only the particles that are newly injected. 
+
+However, once an ``opp_move_particle`` loop is executed, these particles will no longer be newly injected, hence a loop with ``OPP_ITERATE_INJECTED`` will not iterate any.
 
 .. code-block:: c++
 
