@@ -369,10 +369,78 @@ Double Indirect loop
 There could be instances where double indirection is required. 
 For example in ``deposit_charge_on_nodes``, we may need to deposit charge from particles to nodes, but from particles we have a single mapping towards the cells, with another mapping from cells to nodes.
 
+Here we iterate over particles set, access node charge density through double-indirect accesses using ``p2c_map`` and ``c2n_map``.
 Note that one cell in FemPIC is linked with 4 surrounding nodes and ``n_charge_den`` has a dimension of one.
 
+.. code-block:: c++
 
+    //deposit_charge_on_nodes : iterates over cells
+    for (int iter = 0; iter < nparticles; ++iter) {
+        const int p2c = p2c_map[iter];
+        const int map1idx = c2n_map[p2c * 4 + 0];
+        const int map2idx = c2n_map[p2c * 4 + 1];
+        const int map3idx = c2n_map[p2c * 4 + 2];
+        const int map4idx = c2n_map[p2c * 4 + 3];
 
+        n_charge_den[1 * map1idx] += p_lc[4 * iter + 0];
+        n_charge_den[1 * map2idx] += p_lc[4 * iter + 1];
+        n_charge_den[1 * map3idx] += p_lc[4 * iter + 2];
+        n_charge_den[1 * map4idx] += p_lc[4 * iter + 3];
+    }
+
+Similarly, we outline the loop body and call it within the loop as follows:
+
+.. code-block:: c++
+
+    //outlined elemental kernel
+    inline void dep_charge_kernel(const double *part_lc, 
+        double *node_charge_den0, double *node_charge_den1,
+        double *node_charge_den2, double *node_charge_den3) {
+    
+        node_charge_den0[0] += part_lc[0];
+        node_charge_den1[0] += part_lc[1];
+        node_charge_den2[0] += part_lc[2];
+        node_charge_den3[0] += part_lc[3];   
+    }
+
+    //deposit_charge_on_nodes : iterates over cells
+    for (int iter = 0; iter < nparticles; ++iter) {
+        const int p2c = p2c_map[iter];
+        const int map1idx = c2n_map[p2c * 4 + 0];
+        const int map2idx = c2n_map[p2c * 4 + 1];
+        const int map3idx = c2n_map[p2c * 4 + 2];
+        const int map4idx = c2n_map[p2c * 4 + 3];
+
+        dep_charge_kernel(&p_lc[4 * iter], 
+            &n_charge_den[1 * map1idx], &n_charge_den[1 * map2idx], 
+            &n_charge_den[1 * map3idx], &n_charge_den[1 * map4idx]);
+    }
+
+Now, convert the loop to use the opp_par_loop API:
+
+.. code-block:: c++
+
+    //outlined elemental kernel
+    inline void dep_charge_kernel(const double *part_lc, 
+        double *node_charge_den0, double *node_charge_den1,
+        double *node_charge_den2, double *node_charge_den3) {
+    
+        node_charge_den0[0] += part_lc[0];
+        node_charge_den1[0] += part_lc[1];
+        node_charge_den2[0] += part_lc[2];
+        node_charge_den3[0] += part_lc[3];   
+    }
+
+    opp_par_loop(dep_charge_kernel, "deposit_charge_on_nodes", particle_set, OPP_ITERATE_ALL,
+        opp_arg_dat(p_lc,                              OPP_READ),
+        opp_arg_dat(n_charge_den, 0, c2n_map, p2c_map, OPP_INC),
+        opp_arg_dat(n_charge_den, 1, c2n_map, p2c_map, OPP_INC),
+        opp_arg_dat(n_charge_den, 2, c2n_map, p2c_map, OPP_INC),
+        opp_arg_dat(n_charge_den, 3, c2n_map, p2c_map, OPP_INC));
+
+Note in this case how the indirections are specified using the mapping declared using two ``opp_map``s ``p2c_map`` and ``c2n_map``, indicating the to-set index (2nd argument), and access mode ``OPP_INC``.
+That is, the second argument of the ``opp_par_loop`` is an increment argument mapped from particles to cells and cells to nodes using the mapping at the 0th index of c2n_map (i.e. 1st mapping out of 4 nodes attached).
+Likewise, the thrid argument of ``opp_par_loop`` is mapped from particles to cells and cells to nodes using the mapping at the 1th index of ``c2n_map`` (i.e. 2nd mapping out of 4 nodes attached) and so on.
 
 Step 4 - Move loop : ``opp_particle_move``
 ------------------------------------------
