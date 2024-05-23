@@ -894,18 +894,19 @@ See ``OP-PIC/app_fempic/fempic_hdf5.cpp`` for a complete example.
 
     opp_dat dp_rand = opp_decl_dat_hdf5(dummy_part_set, 2, DT_REAL, file.c_str(), "dummy_part_rand");
 
-Note here that we assume that the mesh is already available as an HDF5 file and the name can be obtained as a config. 
-(See the ``OP-PIC/app_handcoded/app_fempic_opphc/fempic_convert_hdf5.cpp`` utility application to understand how we can create an HDF5 file to be compatible with the OP-PIC API for FemPIC starting from mesh data defined in a text file.)
+Note here that we assume that the mesh is already available as an ``HDF5`` file and the name can be obtained as a config. 
+(See the ``OP-PIC/app_handcoded/app_fempic_opphc/fempic_convert_hdf5.cpp`` utility application to understand how we can create an ``HDF5`` file to be compatible with the OP-PIC API for FemPIC starting from mesh data defined in a text file.)
 
-When the application has been switched to use the HDF5 API calls, manually allocated memory for the mesh elements can be removed. 
+When the application has been switched to use the ``HDF5`` API calls, manually allocated memory for the mesh elements can be removed. 
 Additionally all ``printf`` statements should use ``opp_printf`` which will add details such as the MPI rank and main loop iteration count that this print statement is invoked.
-OPP_RUN_ON_ROOT() can be used to run only on root. 
+``OPP_RUN_ON_ROOT()`` can be used to run only on root. 
 We can also use timers, utilizing ``opp_profiler->start("name")`` and ``opp_profiler->end("name")``, which will capture the time spent between these two calls and log it once the application calls ``opp_exit()``.
 
 (2) Partitioning data over MPI ranks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Add the OP-PIC partitioner call ``opp_partition`` to the code in order to signal to the MPI back-end, the point in the program that all mesh data have been defined and mesh can be partitioned and MPI halos can be created. Even in the sequential execution this can be scoped between ``ifdef`` to avoid compilation issues.
+Add the OP-PIC partitioner call ``opp_partition`` to the code in order to signal to the MPI back-end, the point in the program that all mesh data have been defined and mesh can be partitioned and MPI halos can be created. 
+Even in the sequential execution this can be scoped between ``ifdef`` to avoid compilation issues.
 
 .. code-block:: c++
 
@@ -924,7 +925,8 @@ Add the OP-PIC partitioner call ``opp_partition`` to the code in order to signal
     ...
 
 See the API documentation for partitioner options. 
-In this case no special custom partitioning scheme is used to minimize particle communications.
+
+In this case a special custom partitioning scheme is used to minimize particle communications.
 That is done by the enrichment of ``c_colors`` within a user written fempic_color_block function (OP-PIC/app_fempic/fempic_misc_mesh_colour.h).
 
 
