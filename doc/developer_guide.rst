@@ -442,12 +442,97 @@ Now, convert the loop to use the opp_par_loop API:
 
 Note in this case how the indirections are specified using the mapping declared using two maps ``p2c_map`` and ``c2n_map``, indicating the to-set index (2nd argument), and access mode ``OPP_INC``.
 
-That is, the second argument of the ``opp_par_loop`` is an increment argument mapped from particles to cells and cells to nodes using the mapping at the 0th index of c2n_map (i.e. 1st mapping out of 4 nodes attached).
+That is, the second argument of the ``opp_par_loop`` is an increment argument mapped from particles to cells and cells to nodes using the mapping at the 0th index of ``c2n_map`` (i.e. 1st mapping out of 4 nodes attached).
 Likewise, the thrid argument of ``opp_par_loop`` is mapped from particles to cells and cells to nodes using the mapping at the 1th index of ``c2n_map`` (i.e. 2nd mapping out of 4 nodes attached) and so on.
 
 Step 4 - Move loop : ``opp_particle_move``
 ------------------------------------------
+A key step in a PIC solver is the particle move. 
+Here we will first illustrate how a particle mover operates in an unstructured mesh environment.
 
+The main idea of a particle mover is to search and position particles once it is moved to a new position under the influence of electric and magnetic fields.
+
+The first strategy that we discuss here is named as ``Multi-Hop (MH)``. 
+It loop over each particle and “track” its movement from cell to cell by computing the next probable cell. 
+This entails an inner loop per particle which will terminate when the final destination cell is reached.
+
+To explain this, we use the FemPIC particle move routine.
+
+.. code-block:: c++
+
+    //deposit_charge_on_nodes : iterates over cells
+    for (int iter = 0; iter < nparticles; ++iter) {
+
+        bool search_next_cell = true;
+        do {
+            const int p2c = p2c_map[iter];
+            const int c2c = c2c_map[iter];
+
+            const double coeff = (1.0 / 6.0) / (cell_volume[1 * p2c]);
+            for (int i=0; i<4; i++) {
+                p_lc[4 * iter + i] = coeff * (c_det[16 * p2c + i * 4 + 0] -
+                    c_det[16 * p2c + i * 4 + 1] * p_pos[3 * iter + 0] +
+                    c_det[16 * p2c + i * 4 + 2] * p_pos[3 * iter + 1] -
+                    c_det[16 * p2c + i * 4 + 3] * p_pos[3 * iter + 2]);
+            }
+        
+            if (!(p_lc[4 * iter + 0] < 0.0 || p_lc[4 * iter + 0] > 1.0 ||
+                  p_lc[4 * iter + 1] < 0.0 || p_lc[4 * iter + 1] > 1.0 ||
+                  p_lc[4 * iter + 2] < 0.0 || p_lc[4 * iter + 2] > 1.0 ||
+                  p_lc[4 * iter + 3] < 0.0 || p_lc[4 * iter + 3] > 1.0)) { // within the current cell
+                search_next_cell = false;
+            }
+            else { // outside the last known cell
+                int min_i = 0;
+                double min_lc = p_lc[4 * iter + 0];
+            
+                for (int i=1; i < 4; i++) { // find most negative weight
+                    if (p_lc[4 * iter + i] < min_lc) {
+                        min_lc = p_lc[4 * iter + i];
+                        min_i = i;
+                    }
+                }
+            
+                if (c2c_map[4 * p2c + min_i] >= 0) { // is there a neighbor in this direction?
+                    p2c_map[iter] = c2c_map[4 * p2c + min_i];
+                    search_next_cell = true;
+                }
+                else {
+                    // No neighbour cell to search next, particle out of domain, Mark and remove from simulation!!!
+                    p2c_map[iter] = INT_MAX; 
+                    search_next_cell = false;
+                }
+            }    
+        } while (search_next_cell)
+    }
+
+Once this move routine is executed, there may be particles with ``INT_MAX`` p2c mapping, which means the data on all the particle dats related to that specific particle index are invalid.
+
+One option is to fill these ``holes`` using valid particle data from the end of the array (we call it hole filling). 
+
+Another option is to sort all the particle arrays according to the p2c_map (desc), which will shift all particles with ``INT_MAX`` p2c mapping to shift to the end. 
+This will have benefits of better cache usage, since all particles that maps to the same cell index will be close to each other, however do note that sorting particle dats follow its own performance overhead!
+
+One other option is to shuffle the particles, while shifting the particles with ``INT_MAX`` p2c mapping to the end of the data structure. 
+The benefits of doing so in device implementations are elaborated in the Optimization section.
+
+
+
+
+
+
+
+
+OP-PIC can declare a particle move as a special loop over particles as illustrated in Figure 6. 
+
+The elemental kernel over all particles will require:
+(1) specifying computations to be carried out for each mesh element,
+e.g., cells, along the path of the particle, until its final destination
+cell; (2) a method to identify if the particle has reached its final
+mesh cell; (3) computations to be carried out at the final destination
+mesh cell; (4) actions to be carry out if the particle has moved
+out of the mesh domain; and, (5) calculate the next most probable
+cell index to search.
 
 
 Step 5 - Global reductions
