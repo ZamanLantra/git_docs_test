@@ -681,6 +681,28 @@ More details on configs will be in a later section.
 
 In addition, all the communications and synchronizations will also occur within ``opp_particle_move`` without any user intervention.
 
+This ``Multi-hop`` approach performance is degraded when particles are moved to a far away cell, making this algorithm to hop for long.
+To address this issue of fast moving particles, OP-PIC incorporates a ``Direct-hop (DH)`` mechanism, where the particles are moved directly to a cell closer to the final destination, and then switches to ``multi-hop`` mode to move it to the correct final destination.
+
+.. image:: image_direct_hop.png
+   :height: 250px
+
+Even though, direct_hop reduces unnecessary computations and communications significantly, a higher memory footprint is required for bookkeeping.
+
+However, this mechanism can only be used in algorithms when it is not required to deposit contributions to all the passing cells during the particle movement. 
+Hence, for the applications we tested ``DH`` can be directly used for electro-static PIC codes, while electo-magnetic PIC codes require deposition of current to each passing cell.
+
+To enable ``DH``, the user should call the API ``opp_init_direct_hop``, with the grid spacing (resolution) required in ``DH`` search scheme, dimension of the simulation (1D, 2D or 3D), a global cell index ``opp_dat`` (mainly required to translate cell indices in an MPI code simulation) and a ``opp::BoundingBox`` indicating the simulation boundaries.
+
+.. code-block:: c++
+
+    opp_init_direct_hop(grid_spacing, DIM, c_gbl_id, bounding_box);
+
+The bounding box can be created by providing a mesh dat that has its positions (like node positions), ``opp::BoundingBox(const opp_dat pos_dat, int dim)`` or simply by providing the calculated minimum and maximum domain coordinates using ``opp::BoundingBox(int dim, opp_point minCoordinate, opp_point maxCoordinate)``.
+
+Once ``opp_init_direct_hop`` is called, the code-generator will extract the required information from ``opp_particle_move`` API call, generate the initilizing code for the additional data structures required for ``DH `` and change the internal do while loop to incorporate the additional DH algorithms.
+
+However, even with an application having ``DH`` code generated and compiled, a user may wish to disable ``DH`` during runtime with no additional performance degradation to ``MH`` using a config (discussed later).
 
 Step 5 - Global reductions
 --------------------------
