@@ -456,6 +456,9 @@ The first strategy that we discuss here is named as ``Multi-Hop (MH)``.
 It loop over each particle and “track” its movement from cell to cell by computing the next probable cell. 
 This entails an inner loop per particle which will terminate when the final destination cell is reached.
 
+.. image:: image_multi_hop.png
+   :height: 100px
+
 To explain this, we use the FemPIC particle move routine.
 
 .. code-block:: c++
