@@ -714,6 +714,112 @@ Once ``opp_init_direct_hop`` API is called, the code-generator will extract the 
 
 However, even with an application having ``DH`` code generated and compiled, a user may wish to disable ``DH`` during runtime with no additional performance degradation to ``MH``, using a config (discussed later).
 
-Step 5 - Global reductions
+Step 5 - Particle injections
+----------------------------
+
+In PIC simulations, particles can be initialized during setup stage, or can be injected during the simulation as an additional routine.
+
+This particle injections imposes performance implications, since frequent reallocations takes time, especially in device code. 
+To avoid this, OP-PIC introduces a new config ``opp_allocation_multiple`` (double) to pre-allocate the set with a multiple of its intended allocation size.
+
+For example, if ``opp_allocation_multiple=10`` and if the particle injection size is 5,000, it will allocate space for 50,000 particles by making ``particle_set->set_capacity`` to 50,000 while maintaining ``particle_set->size`` at 5,000.
+Hence during the injection of the second iteration of the main loop (assume 5,000 again), it will simply make the ``particle_set->size`` to 10,000.
+
+(a) Allocate space for particles
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To allocate new particles, the API ``opp_increase_particle_count`` can be used. This will require the particle set to allocate and num_particles_to_insert. 
+
+.. code-block:: c++
+
+    void opp_increase_particle_count(opp_set particles_set, const int num_particles_to_insert)
+
+.. code-block:: c++
+
+    void opp_inc_part_count_with_distribution(opp_set particles_set, int num_particles_to_insert, opp_dat part_dist)
+
+Another API to inject particles is by, that requires particle distribution ``opp_dat``.
+The part_dist dat should include the particle distribution per cell, and the ``p2c_map`` of the particle set will get enriched with the appropriate cell index.
+
+As an example, consider a mesh with 10 cells:
++------------------------+---+---+---+---+---+---+---+---+---+---+
+| cell index ->          | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
++------------------------+---+---+---+---+---+---+---+---+---+---+
+| particles per cell ->  |10 |11 |10 | 9 | 7 | 7 |10 |12 | 9 |10 |
++------------------------+---+---+---+---+---+---+---+---+---+---+
+| part_dist opp_dat ->   |10 |21 |31 |40 |47 |54 |64 |76 |85 |95 |
++------------------------+---+---+---+---+---+---+---+---+---+---+
+
+Since the mesh is unstructured mesh with different volumes, particles per cell will vary and part_dist ``opp_dat`` should have the particle counts as above (own particles + all particles prior to current cell index).
+Providing this part_dist to ``opp_inc_part_count_with_distribution`` API call will enrich the particle's ``p2c_map`` of first 10 particles with value 0, next 11 particles with value 1, following 10 particles wit value 2 and so on.
+
+This will be beneficial in some cases where cell specific values needs to be enriched in initializing particles.
+
+(b) Initialize the injected particles
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In order to initialize the injected particles, we can use ``opp_par_loop`` with iteration type of ``OPP_ITERATE_INJECTED``. 
+This will allow iterating only the particles that are newly injected. However, once an ``opp_move_particle`` loop is executed, these particles will no longer be newly injected, hence a loop with ``OPP_ITERATE_INJECTED`` will not iterate any.
+
+.. code-block:: c++
+
+    opp_par_loop(inject_ions_kernel, "inject_ions", particle_set, OPP_ITERATE_INJECTED,
+        ... args ...
+    );
+
+Step 6 - Global reductions
 --------------------------
+
+At this stage almost all the remaining loops can be converted to the OP-PIC API. Only the final loop ``get_final_max_values`` needs special handling due to its global reduction to get the max value of node charge density and node potential. 
+
+.. code-block:: c++
+
+    //get_final_max_values : iterates over cells
+    double max_n_charge_den = 0.0, max_n_pot = 0.0;
+    for (int iter = 0; iter < nnodes; ++iter) {
+        max_n_charge_den = MAX(abs(n_charge_den[1 * iter]), max_n_charge_den);     
+        max_n_pot = MAX(n_pot[1 * iter], max_n_pot);   
+    }
+
+Here, the global variable ``max_n_charge_den`` and ``max_n_pot`` are used as a reduction variables. The kernel can be outlined as follows:
+
+.. code-block:: c++
+
+    //outlined elemental kernel
+    inline void get_final_max_values_kernel(
+        const OPP_REAL* n_charge_den, OPP_REAL* max_n_charge_den,
+        const OPP_REAL* n_pot, OPP_REAL* max_n_pot) {
+        max_n_charge_den = MAX(abs(n_charge_den[1 * iter]), max_n_charge_den);     
+        max_n_pot = MAX(n_pot[1 * iter], max_n_pot);
+    }
+    double max_n_charge_den = 0.0, max_n_pot = 0.0;
+    //get_final_max_values : iterates over nodes
+    for (int iter = 0; iter < nnodes; ++iter) {
+        get_final_max_values_kernel(&n_charge_den[1 * iter], &max_n_charge_den,
+                                    &n_pot[1 * iter], &max_n_pot);   
+    }
+
+Now, convert the loop to use the ``opp_par_loop`` API:
+
+.. code-block:: c++
+
+    //outlined elemental kernel
+    inline void get_final_max_values_kernel(
+        const OPP_REAL* n_charge_den, OPP_REAL* max_n_charge_den,
+        const OPP_REAL* n_pot, OPP_REAL* max_n_pot) {
+        max_n_charge_den = MAX(abs(n_charge_den[1 * iter]), max_n_charge_den);     
+        max_n_pot = MAX(n_pot[1 * iter], max_n_pot);
+    }
+    double max_n_charge_den = 0.0, max_n_pot = 0.0;
+    opp_par_loop(get_final_max_values_kernel, "get_final_max_values", node_set, OPP_ITERATE_ALL,
+        opp_arg_dat(n_charge_den,                   OPP_READ),
+        opp_arg_gbl(&max_n_charge_den, 1, "double", OPP_MAX),
+        opp_arg_dat(n_potential,                    OPP_READ),
+        opp_arg_gbl(&max_n_pot,        1, "double", OPP_MAX));
+
+This kind of global reductions can be done in both ``opp_par_loop`` and ``opp_particle_move`` loops.
+
+At this point all the loops have been converted to use ``opp_par_loop`` and ``opp_particle_move`` APIs. 
+When developing applications for performance, you should consider freeing the initial memory allocated immediately after the relevant ``opp_decl_map`` and ``opp_decl_dat`` calls. 
+In FemPIC, we are using ``m->DeleteValues()`` to free the initializing data structures.
+
+In the next step we avoid freeing such "application developer allocated" memory by using HDF5 file I/O so that mesh data is directly read from file to OP-PIC allocated internal memory.
 
