@@ -853,46 +853,46 @@ See ``OP-PIC/app_fempic/fempic_hdf5.cpp`` for a complete example.
 
 .. code-block:: c++
 
-    opp_set node_set       = opp_decl_set_hdf5(file.c_str(), "mesh_nodes");
-    opp_set cell_set       = opp_decl_set_hdf5(file.c_str(), "mesh_cells");
-    opp_set iface_set      = opp_decl_set_hdf5(file.c_str(), "inlet_faces_cells");
-    opp_set particle_set   = opp_decl_particle_set_hdf5(file.c_str(), "particles", cell_set); 
-    opp_set dummy_part_set = opp_decl_particle_set_hdf5(file.c_str(), "dummy particles", cell_set); 
+    opp_set node_set       = opp_decl_set_hdf5(file_name, "mesh_nodes");
+    opp_set cell_set       = opp_decl_set_hdf5(file_name, "mesh_cells");
+    opp_set iface_set      = opp_decl_set_hdf5(file_name, "inlet_faces_cells");
+    opp_set particle_set   = opp_decl_particle_set_hdf5(file_name, "particles", cell_set); 
+    opp_set dummy_part_set = opp_decl_particle_set_hdf5(file_name, "dummy particles", cell_set); 
 
-    opp_map c2n_map  = opp_decl_map_hdf5(cell_set,  node_set, 4, file.c_str(), "c_v_n_map");
-    opp_map c2c_map  = opp_decl_map_hdf5(cell_set,  cell_set, 4, file.c_str(), "c_v_c_map"); 
-    opp_map if2c_map = opp_decl_map_hdf5(iface_set, cell_set, 1, file.c_str(), "if_v_c_map"); 
-    opp_map if2n_map = opp_decl_map_hdf5(iface_set, node_set, 4, file.c_str(), "if_v_n_map");
+    opp_map c2n_map  = opp_decl_map_hdf5(cell_set,  node_set, 4, file_name, "c_v_n_map");
+    opp_map c2c_map  = opp_decl_map_hdf5(cell_set,  cell_set, 4, file_name, "c_v_c_map"); 
+    opp_map if2c_map = opp_decl_map_hdf5(iface_set, cell_set, 1, file_name, "if_v_c_map"); 
+    opp_map if2n_map = opp_decl_map_hdf5(iface_set, node_set, 4, file_name, "if_v_n_map");
 
     opp_map p2c_map  = opp_decl_map(particle_set, cell_set, 1, nullptr, "part_mesh_rel");
     
-    opp_dat c_det       = opp_decl_dat_hdf5(cell_set, 16, DT_REAL, file.c_str(), "c_det");  
-    opp_dat c_volume    = opp_decl_dat_hdf5(cell_set, 1,  DT_REAL, file.c_str(), "c_volume");        
-    opp_dat c_ef        = opp_decl_dat_hdf5(cell_set, 3,  DT_REAL, file.c_str(), "c_ef");
-    opp_dat c_sd        = opp_decl_dat_hdf5(cell_set, 12, DT_REAL, file.c_str(), "c_shape_deri"); 
-    opp_dat c_gbl_id    = opp_decl_dat_hdf5(cell_set, 1,  DT_INT,  file.c_str(), "c_gbl_id"); 
-    opp_dat c_colors    = opp_decl_dat_hdf5(cell_set, 1,  DT_INT,  file.c_str(), "c_colors");
-    opp_dat c_centroids = opp_decl_dat_hdf5(cell_set, 3,  DT_REAL, file.c_str(), "c_centroids");
+    opp_dat c_det       = opp_decl_dat_hdf5(cell_set, 16, DT_REAL, file_name, "c_det");  
+    opp_dat c_volume    = opp_decl_dat_hdf5(cell_set, 1,  DT_REAL, file_name, "c_volume");        
+    opp_dat c_ef        = opp_decl_dat_hdf5(cell_set, 3,  DT_REAL, file_name, "c_ef");
+    opp_dat c_sd        = opp_decl_dat_hdf5(cell_set, 12, DT_REAL, file_name, "c_shape_deri"); 
+    opp_dat c_gbl_id    = opp_decl_dat_hdf5(cell_set, 1,  DT_INT,  file_name, "c_gbl_id"); 
+    opp_dat c_colors    = opp_decl_dat_hdf5(cell_set, 1,  DT_INT,  file_name, "c_colors");
+    opp_dat c_centroids = opp_decl_dat_hdf5(cell_set, 3,  DT_REAL, file_name, "c_centroids");
 
-    opp_dat n_volume     = opp_decl_dat_hdf5(node_set, 1, DT_REAL, file.c_str(), "n_vol");        
-    opp_dat n_potential  = opp_decl_dat_hdf5(node_set, 1, DT_REAL, file.c_str(), "n_potential");     
-    opp_dat n_charge_den = opp_decl_dat_hdf5(node_set, 1, DT_REAL, file.c_str(), "n_charge_den");
-    opp_dat n_pos        = opp_decl_dat_hdf5(node_set, 3, DT_REAL, file.c_str(), "n_pos");     
-    opp_dat n_type       = opp_decl_dat_hdf5(node_set, 1, DT_INT,  file.c_str(), "n_type");
-    opp_dat n_bnd_pot    = opp_decl_dat_hdf5(node_set, 1, DT_REAL, file.c_str(), "n_bnd_pot");
+    opp_dat n_volume     = opp_decl_dat_hdf5(node_set, 1, DT_REAL, file_name, "n_vol");        
+    opp_dat n_potential  = opp_decl_dat_hdf5(node_set, 1, DT_REAL, file_name, "n_potential");     
+    opp_dat n_charge_den = opp_decl_dat_hdf5(node_set, 1, DT_REAL, file_name, "n_charge_den");
+    opp_dat n_pos        = opp_decl_dat_hdf5(node_set, 3, DT_REAL, file_name, "n_pos");     
+    opp_dat n_type       = opp_decl_dat_hdf5(node_set, 1, DT_INT,  file_name, "n_type");
+    opp_dat n_bnd_pot    = opp_decl_dat_hdf5(node_set, 1, DT_REAL, file_name, "n_bnd_pot");
 
-    opp_dat if_v_norm  = opp_decl_dat_hdf5(iface_set, 3,  DT_REAL, file.c_str(), "iface_v_norm");
-    opp_dat if_u_norm  = opp_decl_dat_hdf5(iface_set, 3,  DT_REAL, file.c_str(), "iface_u_norm");
-    opp_dat if_norm    = opp_decl_dat_hdf5(iface_set, 3,  DT_REAL, file.c_str(), "iface_norm");  
-    opp_dat if_area    = opp_decl_dat_hdf5(iface_set, 1,  DT_REAL, file.c_str(), "iface_area");
-    opp_dat if_distrib = opp_decl_dat_hdf5(iface_set, 1,  DT_INT,  file.c_str(), "iface_dist");
-    opp_dat if_n_pos   = opp_decl_dat_hdf5(iface_set, 12, DT_REAL, file.c_str(), "iface_n_pos");
+    opp_dat if_v_norm  = opp_decl_dat_hdf5(iface_set, 3,  DT_REAL, file_name, "iface_v_norm");
+    opp_dat if_u_norm  = opp_decl_dat_hdf5(iface_set, 3,  DT_REAL, file_name, "iface_u_norm");
+    opp_dat if_norm    = opp_decl_dat_hdf5(iface_set, 3,  DT_REAL, file_name, "iface_norm");  
+    opp_dat if_area    = opp_decl_dat_hdf5(iface_set, 1,  DT_REAL, file_name, "iface_area");
+    opp_dat if_distrib = opp_decl_dat_hdf5(iface_set, 1,  DT_INT,  file_name, "iface_dist");
+    opp_dat if_n_pos   = opp_decl_dat_hdf5(iface_set, 12, DT_REAL, file_name, "iface_n_pos");
 
-    opp_dat p_pos = opp_decl_dat_hdf5(particle_set, 3, DT_REAL, file.c_str(), "part_position");
-    opp_dat p_vel = opp_decl_dat_hdf5(particle_set, 3, DT_REAL, file.c_str(), "part_velocity");
-    opp_dat p_lc  = opp_decl_dat_hdf5(particle_set, 4, DT_REAL, file.c_str(), "part_lc");
+    opp_dat p_pos = opp_decl_dat_hdf5(particle_set, 3, DT_REAL, file_name, "part_position");
+    opp_dat p_vel = opp_decl_dat_hdf5(particle_set, 3, DT_REAL, file_name, "part_velocity");
+    opp_dat p_lc  = opp_decl_dat_hdf5(particle_set, 4, DT_REAL, file_name, "part_lc");
 
-    opp_dat dp_rand = opp_decl_dat_hdf5(dummy_part_set, 2, DT_REAL, file.c_str(), "dummy_part_rand");
+    opp_dat dp_rand = opp_decl_dat_hdf5(dummy_part_set, 2, DT_REAL, file_name, "dummy_part_rand");
 
 Note here that we assume that the mesh is already available as an ``HDF5`` file and the name can be obtained as a config. 
 (See the ``OP-PIC/app_handcoded/app_fempic_opphc/fempic_convert_hdf5.cpp`` utility application to understand how we can create an ``HDF5`` file to be compatible with the OP-PIC API for FemPIC starting from mesh data defined in a text file.)
@@ -927,7 +927,7 @@ Even in the sequential execution this can be scoped between ``ifdef`` to avoid c
 See the API documentation for partitioner options. 
 
 In this case a special custom partitioning scheme is used to minimize particle communications.
-That is done by the enrichment of ``c_colors`` within a user written fempic_color_block function (OP-PIC/app_fempic/fempic_misc_mesh_colour.h).
+That is done by the enrichment of ``c_colors`` within a user written ``fempic_color_block`` function (``OP-PIC/app_fempic/fempic_misc_mesh_colour.h``).
 
 
 
