@@ -214,6 +214,7 @@ Now we can directly declare the loop with the ``opp_par_loop`` API call:
         opp_arg_dat(n_volume,      OPP_READ));
 
 Note how we have:
+
 - indicated the elemental kernel ``compute_ncd_kernel`` in the first argument to ``opp_par_loop``.
 - used the ``opp_dat``s names ``n_charge_den`` and ``n_volume`` in the API call.
 - noted the iteration set ``node_set`` (3rd argument) and iteration type ``OPP_ITERATE_ALL`` (4th argument).
@@ -225,23 +226,142 @@ Note how we have:
 Indirect loop (single indirection)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+We have selected two loops in FemPIC to demonstrate single indirections. 
+
+First, we use ``compute_electric_field`` calculation to showcase the mesh set to mesh set mapping indirections.
+Here we iterate over cells set, access node potentials through indirect accesses using c2n_map.
+Note that one cell in FemPIC is linked with 4 surrounding nodes and n_potential has a dimension of one.
+
+.. code-block:: c++
+
+    //compute_electric_field : iterates over cells
+    for (int iter = 0; iter < ncell; ++iter) {
+        const int map1idx = c2n_map[iter * 4 + 0];
+        const int map2idx = c2n_map[iter * 4 + 1];
+        const int map3idx = c2n_map[iter * 4 + 2];
+        const int map4idx = c2n_map[iter * 4 + 3];
+        
+        for (int dim = 0; dim < 3; dim++) { 
+            c_ef[3 * iter + dim] = c_ef[12 * iter + dim] - 
+                ((c_sd[12 * iter + (0 + dim)] * n_potential[map1idx * 1 + 0])) + 
+                (c_sd[12 * iter + (3 + dim)] * n_potential[map2idx * 1 + 0])) +
+                (c_sd[12 * iter + (6 + dim)] * n_potential[map3idx * 1 + 0])) + 
+                (c_sd[12 * iter + (9 + dim)] * n_potential[map4idx * 1 + 0])));
+        }
+    }
+
+Similar to the direct loop, we outline the loop body and call it within the loop as follows:
+
 .. code-block:: c++
 
     //outlined elemental kernel
     inline void compute_ef_kernel(
-        double *cell_ef, const double *cell_sd, const double *node_pot0,
-        const double *node_pot1, const double *node_pot2, const double *node_pot3) {
+        double *c_ef, const double *c_sd, const double *n_pot0,
+        const double *n_pot1, const double *n_pot2, const double *n_pot3) {
+        
         for (int dim = 0; dim < 3; dim++) { 
-            cell_ef[dim] = cell_ef[dim] - 
-                ((cell_sd[0 * 3 + dim] * node_pot0[0])) + (cell_sd[1 * 3 + dim] * node_pot1[0])) +
-                (cell_sd[2 * 3 + dim] * node_pot2[0])) + (cell_sd[3 * 3 + dim] * node_pot3[0])));
+            c_ef[dim] = c_ef[dim] - 
+                ((c_sd[0 + dim] * n_pot0[0])) + (c_sd[3 + dim] * n_pot1[0])) +
+                (c_sd[6 + dim] * n_pot2[0])) + (c_sd[9 + dim] * n_pot3[0])));
+        }    
+    }
+    //compute_electric_field : iterates over cells
+    for (int iter = 0; iter < ncell; ++iter) {
+        const int map1idx = c2n_map[iter * 4 + 0];
+        const int map2idx = c2n_map[iter * 4 + 1];
+        const int map3idx = c2n_map[iter * 4 + 2];
+        const int map4idx = c2n_map[iter * 4 + 3];
+
+        compute_ef_kernel(&c_ef[3 * iter], &c_sd[12 * iter], &n_potential[1 * map1idx],
+            &n_potential[1 * map2idx], &n_potential[1 * map3idx], &n_potential[1 * map4idx]);
+    }
+
+Now, convert the loop to use the opp_par_loop API:
+
+.. code-block:: c++
+
+    //outlined elemental kernel
+    inline void compute_ef_kernel(
+        double *c_ef, const double *c_sd, const double *n_pot0,
+        const double *n_pot1, const double *n_pot2, const double *n_pot3) {
+        
+        for (int dim = 0; dim < 3; dim++) { 
+            c_ef[dim] = c_ef[dim] - 
+                ((c_sd[0 * 3 + dim] * n_pot0[0])) + (c_sd[1 * 3 + dim] * n_pot1[0])) +
+                (c_sd[2 * 3 + dim] * n_pot2[0])) + (c_sd[3 * 3 + dim] * n_pot3[0])));
         }    
     }
 
     opp_par_loop(compute_ef_kernel, "compute_electric_field", cell_set, OPP_ITERATE_ALL,
-        opp_arg_dat(c_ef,                    OPP_INC), 
+        opp_arg_dat(c_ef,                    OPP_RW), 
         opp_arg_dat(c_sd,                    OPP_READ),
         opp_arg_dat(n_potential, 0, c2n_map, OPP_READ),
         opp_arg_dat(n_potential, 1, c2n_map, OPP_READ),
         opp_arg_dat(n_potential, 2, c2n_map, OPP_READ),
         opp_arg_dat(n_potential, 3, c2n_map, OPP_READ));
+
+Note in this case how the indirections are specified using the mapping declared as ``opp_map`` c2n_map, indicating the to-set index (2nd argument), and access mode OPP_READ.
+That is, the thrid argument of the ``opp_par_loop`` is a read-only argument mapped from cells to nodes using the mapping at the 0th index of c2n_map (i.e. 1st mapping out of 4 nodes attached).
+Likewise, the fourth argument of ``opp_par_loop`` is mapped from cells to nodes using the mapping at the 1th index of c2n_map (i.e. 2nd mapping out of 4 nodes attached) and so on.
+
+Second, we use ``calculate_new_pos_vel`` calculation to showcase the particle set to mesh set mapping indirections.
+Here we iterate over particles set, access cell electric fields through indirect accesses using p2c_map.
+Note that one particle in FemPIC can be linked with only only one cell.
+
+.. code-block:: c++
+
+    //calculate_new_pos_vel : iterates over cells
+    for (int iter = 0; iter < nparticles; ++iter) {
+        const int p2c = p2c_map[iter];
+        const double coef = CONST_charge[0] / CONST_mass[0] * CONST_dt[0];
+        for (int dim = 0; dim < 3; dim++) {
+            p_vel[3 * iter + dim] += (coef * c_ef[3 * p2c * dim]);   
+            p_pos[3 * iter + dim] += p_vel[3 * iter + dim] * CONST_dt[0];                
+        }
+    }
+
+Then, we outline the loop body and call it within the loop as follows:
+
+.. code-block:: c++
+
+    //outlined elemental kernel
+    inline void calc_pos_vel_kernel(
+        const double *cell_ef, double *part_pos, double *part_vel) {
+
+        const double coef = CONST_charge[0] / CONST_mass[0] * CONST_dt[0];
+        for (int dim = 0; dim < 3; dim++) {
+            part_vel[dim] += (coef * cell_ef[dim]);   
+            part_pos[dim] += part_vel[dim] * (CONST_dt[0]);                
+        }  
+    }
+    //calculate_new_pos_vel : iterates over particles
+    for (int iter = 0; iter < nparticles; ++iter) {
+        const int p2c = p2c_map[iter];
+        calc_pos_vel_kernel(&c_ef[3 * p2c], &p_pos[3 * iter], &p_vel[3 * iter]);
+    }
+
+Now, convert the loop to use the opp_par_loop API:
+
+.. code-block:: c++
+
+    //outlined elemental kernel
+    inline void calc_pos_vel_kernel(
+        const double *cell_ef, double *part_pos, double *part_vel) {
+
+        const double coef = CONST_charge[0] / CONST_mass[0] * CONST_dt[0];
+        for (int dim = 0; dim < 3; dim++) {
+            part_vel[dim] += (coef * cell_ef[dim]);   
+            part_pos[dim] += part_vel[dim] * (CONST_dt[0]);                
+        }  
+    }
+
+    opp_par_loop(calc_pos_vel_kernel, "calculate_new_pos_vel", particle_set, OPP_ITERATE_ALL,
+        opp_arg_dat(c_ef, p2c_map, OPP_READ),
+        opp_arg_dat(p_pos,         OPP_WRITE),
+        opp_arg_dat(p_vel,         OPP_WRITE));
+
+Note in this case how the indirections are specified using the mapping declared as ``opp_map`` p2c_map, and access mode OPP_READ.
+That is, the first argument of the ``opp_par_loop`` is a read-only argument mapped from particles to cells, however a mapping index is not required since always particles to cells mapping has a dimension of one.
+
+
+
