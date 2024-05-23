@@ -835,3 +835,98 @@ In FemPIC, we are using ``m->DeleteValues()`` to free the initializing data stru
 
 In the next step we avoid freeing such "application developer allocated" memory by using HDF5 file I/O so that mesh data is directly read from file to OP-PIC allocated internal memory.
 
+Step 7 - Handing it all to OP-PIC
+---------------------------------
+
+Once the developer sequential version has been created and the numerical output validates the application can be prepared to obtain a developer distributed memory parallel version. 
+This step can be completed to obtain a parallel executable that works with distributed memory MPI.
+
+(1) Distributing data over MPI ranks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+One way is to load the mesh into the OPP_ROOT (rank 0) and then distribute over MPI ranks. 
+For an example, ``check distribute_data_over_ranks`` function in ``OP-PIC/app_fempic/fempic_misc_mesh_loader.h``.
+This approach limits scaling when a large mesh is used (may take time to load data to one rank and distribute) and possibly run out of memory.
+
+The other approach is to use HDF5 files to load data using HDF5 derivatives of the ``opp_decl_set, opp_decl_particle_set, opp_decl_map and opp_decl_dat`` API calls. 
+
+See ``OP-PIC/app_fempic/fempic_hdf5.cpp`` for a complete example.
+
+.. code-block:: c++
+
+    opp_set node_set       = opp_decl_set_hdf5(file.c_str(), "mesh_nodes");
+    opp_set cell_set       = opp_decl_set_hdf5(file.c_str(), "mesh_cells");
+    opp_set iface_set      = opp_decl_set_hdf5(file.c_str(), "inlet_faces_cells");
+    opp_set particle_set   = opp_decl_particle_set_hdf5(file.c_str(), "particles", cell_set); 
+    opp_set dummy_part_set = opp_decl_particle_set_hdf5(file.c_str(), "dummy particles", cell_set); 
+
+    opp_map c2n_map  = opp_decl_map_hdf5(cell_set,  node_set, 4, file.c_str(), "c_v_n_map");
+    opp_map c2c_map  = opp_decl_map_hdf5(cell_set,  cell_set, 4, file.c_str(), "c_v_c_map"); 
+    opp_map if2c_map = opp_decl_map_hdf5(iface_set, cell_set, 1, file.c_str(), "if_v_c_map"); 
+    opp_map if2n_map = opp_decl_map_hdf5(iface_set, node_set, 4, file.c_str(), "if_v_n_map");
+
+    opp_map p2c_map  = opp_decl_map(particle_set, cell_set, 1, nullptr, "part_mesh_rel");
+    
+    opp_dat c_det       = opp_decl_dat_hdf5(cell_set, 16, DT_REAL, file.c_str(), "c_det");  
+    opp_dat c_volume    = opp_decl_dat_hdf5(cell_set, 1,  DT_REAL, file.c_str(), "c_volume");        
+    opp_dat c_ef        = opp_decl_dat_hdf5(cell_set, 3,  DT_REAL, file.c_str(), "c_ef");
+    opp_dat c_sd        = opp_decl_dat_hdf5(cell_set, 12, DT_REAL, file.c_str(), "c_shape_deri"); 
+    opp_dat c_gbl_id    = opp_decl_dat_hdf5(cell_set, 1,  DT_INT,  file.c_str(), "c_gbl_id"); 
+    opp_dat c_colors    = opp_decl_dat_hdf5(cell_set, 1,  DT_INT,  file.c_str(), "c_colors");
+    opp_dat c_centroids = opp_decl_dat_hdf5(cell_set, 3,  DT_REAL, file.c_str(), "c_centroids");
+
+    opp_dat n_volume     = opp_decl_dat_hdf5(node_set, 1, DT_REAL, file.c_str(), "n_vol");        
+    opp_dat n_potential  = opp_decl_dat_hdf5(node_set, 1, DT_REAL, file.c_str(), "n_potential");     
+    opp_dat n_charge_den = opp_decl_dat_hdf5(node_set, 1, DT_REAL, file.c_str(), "n_charge_den");
+    opp_dat n_pos        = opp_decl_dat_hdf5(node_set, 3, DT_REAL, file.c_str(), "n_pos");     
+    opp_dat n_type       = opp_decl_dat_hdf5(node_set, 1, DT_INT,  file.c_str(), "n_type");
+    opp_dat n_bnd_pot    = opp_decl_dat_hdf5(node_set, 1, DT_REAL, file.c_str(), "n_bnd_pot");
+
+    opp_dat if_v_norm  = opp_decl_dat_hdf5(iface_set, 3,  DT_REAL, file.c_str(), "iface_v_norm");
+    opp_dat if_u_norm  = opp_decl_dat_hdf5(iface_set, 3,  DT_REAL, file.c_str(), "iface_u_norm");
+    opp_dat if_norm    = opp_decl_dat_hdf5(iface_set, 3,  DT_REAL, file.c_str(), "iface_norm");  
+    opp_dat if_area    = opp_decl_dat_hdf5(iface_set, 1,  DT_REAL, file.c_str(), "iface_area");
+    opp_dat if_distrib = opp_decl_dat_hdf5(iface_set, 1,  DT_INT,  file.c_str(), "iface_dist");
+    opp_dat if_n_pos   = opp_decl_dat_hdf5(iface_set, 12, DT_REAL, file.c_str(), "iface_n_pos");
+
+    opp_dat p_pos = opp_decl_dat_hdf5(particle_set, 3, DT_REAL, file.c_str(), "part_position");
+    opp_dat p_vel = opp_decl_dat_hdf5(particle_set, 3, DT_REAL, file.c_str(), "part_velocity");
+    opp_dat p_lc  = opp_decl_dat_hdf5(particle_set, 4, DT_REAL, file.c_str(), "part_lc");
+
+    opp_dat dp_rand = opp_decl_dat_hdf5(dummy_part_set, 2, DT_REAL, file.c_str(), "dummy_part_rand");
+
+Note here that we assume that the mesh is already available as an HDF5 file and the name can be obtained as a config. 
+(See the ``OP-PIC/app_handcoded/app_fempic_opphc/fempic_convert_hdf5.cpp`` utility application to understand how we can create an HDF5 file to be compatible with the OP-PIC API for FemPIC starting from mesh data defined in a text file.)
+
+When the application has been switched to use the HDF5 API calls, manually allocated memory for the mesh elements can be removed. 
+Additionally all ``printf`` statements should use ``opp_printf`` which will add details such as the MPI rank and main loop iteration count that this print statement is invoked.
+OPP_RUN_ON_ROOT() can be used to run only on root. 
+We can also use timers, utilizing ``opp_profiler->start("name")`` and ``opp_profiler->end("name")``, which will capture the time spent between these two calls and log it once the application calls ``opp_exit()``.
+
+(2) Partitioning data over MPI ranks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Add the OP-PIC partitioner call ``opp_partition`` to the code in order to signal to the MPI back-end, the point in the program that all mesh data have been defined and mesh can be partitioned and MPI halos can be created. Even in the sequential execution this can be scoped between ``ifdef`` to avoid compilation issues.
+
+.. code-block:: c++
+
+     ...
+     ...
+    opp_decl_const<OPP_REAL>(ONE, &wall_potential, "CONST_wall_potential");
+
+    #ifdef USE_MPI
+        fempic_color_block(c_colors, c_centroids, if_n_pos, if2n_map);
+
+        // opp_partition(std::string("PARMETIS_KWAY"), cell_set, c2n_map);
+        // opp_partition(std::string("PARMETIS_GEOM"), iface_set, nullptr, if_n_pos);
+        opp_partition(std::string("EXTERNAL"), cell_set, nullptr, c_colors);
+    #endif
+
+     ...
+     ...
+
+See the API documentation for practitioner options. 
+In this case no special custom partitioning scheme is used to minimize particle communications.
+That is done by the enrichment of ``c_colors`` within a user written fempic_color_block function (OP-PIC/app_fempic/fempic_misc_mesh_colour.h).
+
+
+
