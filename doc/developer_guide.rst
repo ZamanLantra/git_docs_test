@@ -170,8 +170,8 @@ An example can be seen in the next section (Step 3).
 Step 3 - Parallel loop : ``opp_par_loop``
 ------------------------------------------
 
-Direct loop
-~~~~~~~~~~~
+(a) Direct loop
+~~~~~~~~~~~~~~~
 
 We can now convert a direct loop to use the OP-PIC API. 
 
@@ -223,8 +223,8 @@ Note how we have:
 - given that ``n_volume`` is read only we also indicate this by the key word ``const`` for ``compute_ncd_kernel`` elemental kernel.
 - note that we have accessed a const value ``CONST_spwt`` that we declared using ``opp_decl_const<OPP_REAL>()`` API call.
 
-Indirect loop (single indirection)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+(b) Indirect loop (single indirection)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We have selected two loops in FemPIC to demonstrate single indirections. 
 
@@ -301,6 +301,7 @@ Now, convert the loop to use the opp_par_loop API:
         opp_arg_dat(n_potential, 3, c2n_map, OPP_READ));
 
 Note in this case how the indirections are specified using the mapping declared as ``opp_map`` ``c2n_map``, indicating the to-set index (2nd argument), and access mode ``OPP_READ``.
+
 That is, the thrid argument of the ``opp_par_loop`` is a read-only argument mapped from cells to nodes using the mapping at the 0th index of c2n_map (i.e. 1st mapping out of 4 nodes attached).
 Likewise, the fourth argument of ``opp_par_loop`` is mapped from cells to nodes using the mapping at the 1th index of ``c2n_map`` (i.e. 2nd mapping out of 4 nodes attached) and so on.
 
@@ -361,10 +362,11 @@ Now, convert the loop to use the opp_par_loop API:
         opp_arg_dat(p_vel,         OPP_WRITE));
 
 Note in this case how the indirections are specified using the mapping declared as ``opp_map`` ``p2c_map``, and access mode ``OPP_READ``.
+
 That is, the first argument of the ``opp_par_loop`` is a read-only argument mapped from particles to cells, however a mapping index is not required since always particles to cells mapping has a dimension of one.
 
-Double Indirect loop
-~~~~~~~~~~~~~~~~~~~~
+(c) Double Indirect loop
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 There could be instances where double indirection is required. 
 For example in ``deposit_charge_on_nodes``, we may need to deposit charge from particles to nodes, but from particles we have a single mapping towards the cells, with another mapping from cells to nodes.
@@ -438,7 +440,8 @@ Now, convert the loop to use the opp_par_loop API:
         opp_arg_dat(n_charge_den, 2, c2n_map, p2c_map, OPP_INC),
         opp_arg_dat(n_charge_den, 3, c2n_map, p2c_map, OPP_INC));
 
-Note in this case how the indirections are specified using the mapping declared using two ``opp_map``s ``p2c_map`` and ``c2n_map``, indicating the to-set index (2nd argument), and access mode ``OPP_INC``.
+Note in this case how the indirections are specified using the mapping declared using two maps ``p2c_map`` and ``c2n_map``, indicating the to-set index (2nd argument), and access mode ``OPP_INC``.
+
 That is, the second argument of the ``opp_par_loop`` is an increment argument mapped from particles to cells and cells to nodes using the mapping at the 0th index of c2n_map (i.e. 1st mapping out of 4 nodes attached).
 Likewise, the thrid argument of ``opp_par_loop`` is mapped from particles to cells and cells to nodes using the mapping at the 1th index of ``c2n_map`` (i.e. 2nd mapping out of 4 nodes attached) and so on.
 
