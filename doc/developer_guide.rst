@@ -741,6 +741,7 @@ Another API to inject particles is by, that requires particle distribution ``opp
 The part_dist dat should include the particle distribution per cell, and the ``p2c_map`` of the particle set will get enriched with the appropriate cell index.
 
 As an example, consider a mesh with 10 cells:
+
 +------------------------+---+---+---+---+---+---+---+---+---+---+
 | cell index ->          | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
 +------------------------+---+---+---+---+---+---+---+---+---+---+
