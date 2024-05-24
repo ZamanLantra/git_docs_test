@@ -71,8 +71,7 @@ Initialisation and Termination
    .. note::
       At present **dim** must be an integer literal or a :c:expr:`#define`
 
-.. c:function:: template <typename T> \
-                void opp_decl_const(int dim, T* data, const char* name)
+.. c:function:: template <typename T> void opp_decl_const(int dim, T* data, const char* name)
 
    This routine defines constant data with global scope that can be used in kernel functions.
 
@@ -83,14 +82,14 @@ Initialisation and Termination
    .. note::
       The variable is available in the kernel functions with type :c:expr:`T` with type :c:expr:`T*`. Hence even if **dim** is :c:expr:`1`, it should be accessed as :c:expr:`CONST_+<var_name>[0]` within the kernel.
 
-.. c:function:: void opp_partition(std::string lib_name, opp_set prime_set, opp_map prime_map = nullptr, opp_dat dat = nullptr)
+.. c:function:: void opp_partition(std::string lib_name, opp_set prime_set, opp_map prime_map, opp_dat dat)
 
    This routine controls the partitioning of the sets used for distributed memory parallel execution.
 
    :param lib_name: The partitioning library to use, see below.
    :param prime_set: Specifies the set to be partitioned.
-   :param prime_map: Specifies the map to be used to create adjacency lists for the **prime_set**. Required if using :c:expr:`"KWAY"` or :c:expr:`"GEOMKWAY"`.
-   :param dat: Specifies the :c:expr:`opp_dat` required for the partitioning strategy.
+   :param prime_map: Specifies the map to be used to create adjacency lists for the **prime_set**. Required if using :c:expr:`"KWAY"` or :c:expr:`"GEOMKWAY"` (defaulted to :c:expr:`nullptr`).
+   :param dat: Specifies the :c:expr:`opp_dat` required for the partitioning strategy (defaulted to :c:expr:`nullptr`).
 
    The current options for **lib_name** are:
 
