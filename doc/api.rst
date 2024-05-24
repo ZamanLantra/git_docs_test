@@ -48,34 +48,53 @@ Initialisation and Termination
 .. c:function:: opp_map opp_decl_map(opp_set from, opp_set to, int dim, int *imap, char const *name)
 
    This routine defines a mapping between sets. 
-   imap should contain a valid data array pointer. 
-   The only exception is to provide `nullptr` given the from set is a particle set with zero particles in it.
-         
+   
    :param from: Source set.
    :param to: Destination set.
    :param dim: Number of mappings per source element.
    :param imap: Mapping table.
    :param name: A name to be used for output diagnostics.
 
+   .. note::
+      imap should contain a valid data array pointer. The only exception is to provide `nullptr` given the from set is a particle set with zero particles in it.
+   
+.. c:function:: opp_dat opp_decl_dat(opp_set set, int dim, opp_data_type dtype, void *data, char const *name)
 
+   This routine defines a dataset.
 
+   :param set: The set the data is associated with (can be a mesh set or a particle set).
+   :param dim: Number of data elements per set element.
+   :param type: The datatype, This can be a type in :c:expr:`opp_data_type` enum (:c:expr:`DT_INT` or :c:expr:`DT_REAL`, other type may be added later).
+   :param data: Input data of type :c:type:`T` (checked for consistency with **type** at run-time). The data must be provided in AoS form with each of the **dim** elements per set element contiguous in memory.
+   :param name: A name to be used for output diagnostics.
 
-.. c:function:: void op_partition(char *lib_name, char *lib_routine, op_set prime_set, op_map prime_map, op_dat coords)
+   .. note::
+      At present **dim** must be an integer literal or a :c:expr:`#define`
+
+.. c:function:: template <typename T> void opp_decl_const(int dim, T* data, const char* name)
+
+   This routine defines constant data with global scope that can be used in kernel functions.
+
+   :param dim: Number of data elements. For maximum efficiency this should be an integer literal or a :c:expr:`#define`.
+   :param data: A pointer to the data, checked for type consistency at run-time.
+   :param name: The name as a string that the kernels access it, (should be :c:expr:`CONST_+<var_name>`).
+
+   .. note::
+      The variable is available in the kernel functions with type :c:expr:`T` with type :c:expr:`T*`. Hence even if **dim** is :c:expr:`1`, it should be accessed as :c:expr:`CONST_+<var_name>[0]` within the kernel.
+
+.. c:function:: void opp_partition(std::string lib_name, opp_set prime_set, opp_map prime_map = nullptr, opp_dat dat = nullptr)
 
    This routine controls the partitioning of the sets used for distributed memory parallel execution.
 
    :param lib_name: The partitioning library to use, see below.
-   :param lib_routine: The partitioning algorithm to use. Required if using :c:expr:`"PTSCOTCH"`, :c:expr:`"PARMETIS"` or https://kahip.github.io/ as the **lib_name**.
    :param prime_set: Specifies the set to be partitioned.
    :param prime_map: Specifies the map to be used to create adjacency lists for the **prime_set**. Required if using :c:expr:`"KWAY"` or :c:expr:`"GEOMKWAY"`.
-   :param coords: Specifies the geometric coordinates of the **prime_set**. Required if using :c:expr:`"GEOM"` or :c:expr:`"GEOMKWAY"`.
+   :param dat: Specifies the :c:expr:`opp_dat` required for the partitioning strategy.
 
    The current options for **lib_name** are:
 
    - :c:expr:`"PTSCOTCH"`: The `PT-Scotch <https://www.labri.fr/perso/pelegrin/scotch/>`_ library.
-   - :c:expr:`"PARMETIS"`: The `ParMETIS <http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview>`_ library.
-   - :c:expr:`"KAHIP"`: The `KaHIP <https://kahip.github.io/>`_ library.
-   - :c:expr:`"INERTIAL"`: Internal 3D recursive inertial bisection partitioning.
+   - :c:expr:`"PARMETIS"`: The `ParMETIS <http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview>`_ library.    geometric coordinates of the **prime_set**. Required if using :c:expr:`"GEOM"` or :c:expr:`"GEOMKWAY"`.
    - :c:expr:`"EXTERNAL"`: External partitioning optionally read in when using HDF5 I/O.
    - :c:expr:`"RANDOM"`: Random partitioning, intended for debugging purposes.
 
@@ -89,40 +108,4 @@ Initialisation and Termination
    - :c:expr:`"GEOM"`: Geometric graph partitioning.
    - :c:expr:`"GEOMKWAY"`: Geometric followed by k-way graph partitioning.
 
-.. c:function:: void op_decl_const(int dim, char *type, T *dat)
-
-   This routine defines constant data with global scope that can be used in kernel functions.
-
-   :param dim: Number of data elements. For maximum efficiency this should be an integer literal.
-   :param type: The type of the data as a string. This can be either intrinsic (:c:expr:`"float"`, :c:expr:`"double"`, :c:expr:`"int"`, :c:expr:`"uint"`, :c:expr:`"ll"`, :c:expr:`"ull"`, or :c:expr:`"bool"`) or user-defined.
-   :param dat: A pointer to the data, checked for type consistency at run-time.
-
-   .. note::
-      If **dim** is :c:expr:`1` then the variable is available in the kernel functions with type :c:expr:`T`, otherwise it will be available with type :c:expr:`T*`.
-
-   .. warning::
-      If the executable is not preprocessed, as is the case with the development sequential build, then you must define an equivalent global scope variable to use the data within the kernels.
-
-.. c:function:: op_dat op_decl_dat(op_set set, int dim, char *type, T *data, char *name)
-
-   This routine defines a dataset.
-
-   :param set: The set the data is associated with.
-   :param dim: Number of data elements per set element.
-   :param type: The datatype as a string, as with :c:func:`op_decl_const()`. A qualifier may be added to control data layout - see :ref:`api:Dataset Layout`.
-   :param data: Input data of type :c:type:`T` (checked for consistency with **type** at run-time). The data must be provided in AoS form with each of the **dim** elements per set element contiguous in memory.
-   :param name: A name to be used for output diagnostics.
-
-   .. note::
-      At present **dim** must be an integer literal. This restriction will be removed in the future but an integer literal will remain more efficient.
-
-.. c:function:: op_dat op_decl_dat_temp(op_set set, int dim, char *type, T *data, char *name)
-
-    Equivalent to :c:func:`op_decl_dat()` but the dataset may be released early with :c:func:`op_free_dat_temp()`.
-
-.. c:function:: void op_free_dat_temp(op_dat dat)
-
-   This routine releases a temporary dataset defined with :c:func:`op_decl_dat_temp()`
-
-   :param dat: The dataset to free.
 
