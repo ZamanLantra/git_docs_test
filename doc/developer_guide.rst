@@ -729,9 +729,9 @@ In PIC simulations, particles can be initialized during setup stage, or can be i
 This particle injections imposes performance implications, since frequent reallocations takes time, especially in device code. 
 To avoid this, OP-PIC introduces a new config ``opp_allocation_multiple`` (double) to pre-allocate the set with a multiple of its intended allocation size.
 
-For example, if ``opp_allocation_multiple=10`` and if the ``parts_to_insert`` is 5,000, it will allocate space for 50,000 particles, making ``particle_set->set_capacity`` to 50,000 while maintaining ``particle_set->size`` at 5,000.
+For example, if ``opp_allocation_multiple=10`` and if the ``parts_to_insert=5,000``, it will allocate space for 50,000 particles, making ``particle_set->set_capacity`` to 50,000 while maintaining ``particle_set->size`` at 5,000.
 
-Hence during the injection of the second iteration of the main loop (assume ``parts_to_insert`` as 5,000 again), it will simply make the ``particle_set->size`` to 10,000.
+Hence during the injection of the second iteration of the main loop (assume ``parts_to_insert=5,000`` again), it will simply make the ``particle_set->size`` to 10,000.
 
 (a) Allocate space for particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
