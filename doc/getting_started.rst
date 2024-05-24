@@ -29,9 +29,9 @@ Dependencies
 
  In addition, there are a few optional library dependencies that you will likely have to build manually, although some package managers or programming environments may be able to provide appropriate versions:
 
- * (Optional) `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`: Used for HDF5 I/O. You may build with and without ``--enable-parallel`` (depending on if you need MPI), and then specify via the environment variable ``HDF5_INSTALL_PATH``.
- * (Optional) `PETSc <https://petsc.org/release/install/download/>`: Used for linear/nonlinear sparse matrix solvers. You may build with and without ``--with-mpi=1`` (depending on if you need MPI), and then specify via the environment variable ``PETSC_INSTALL_PATH``.
- * (Optional) `ParMETIS <http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview>`: Can be used for MPI mesh partitioning. Build *with* 32-bit indicies (``-DIDXSIZE32``) and *without* ``-DSCOTCH_PTHREAD``. Specify ParMETIS via the environment variable ``PARMETIS_INSTALL_PATH``.
+ - (Optional) `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`: Used for HDF5 I/O. You may build with and without ``--enable-parallel`` (depending on if you need MPI), and then specify via the environment variable ``HDF5_INSTALL_PATH``.
+ - (Optional) `PETSc <https://petsc.org/release/install/download/>`: Used for linear/nonlinear sparse matrix solvers. You may build with and without ``--with-mpi=1`` (depending on if you need MPI), and then specify via the environment variable ``PETSC_INSTALL_PATH``.
+ - (Optional) `ParMETIS <http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview>`: Can be used for MPI mesh partitioning. Build *with* 32-bit indicies (``-DIDXSIZE32``) and *without* ``-DSCOTCH_PTHREAD``. Specify ParMETIS via the environment variable ``PARMETIS_INSTALL_PATH``.
 
 Compile OP-PIC library
 ----------------------
