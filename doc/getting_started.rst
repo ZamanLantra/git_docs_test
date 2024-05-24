@@ -35,21 +35,21 @@ Dependencies
 
 Compile OP-PIC library
 ----------------------
- * Source the compiler and other environment variables (some example source files can be found at ``OP-PIC/scripts/source`` directory).
- * Change directory to ``OP-PIC/opp_lib``.
- * Compile the required platform specific backend library using make commands (e.g. ``make cuda_mpi``).
+ - Source the compiler and other environment variables (some example source files can be found at ``OP-PIC/scripts/source`` directory).
+ - Change directory to ``OP-PIC/opp_lib``.
+ - Compile the required platform specific backend library using make commands (e.g. ``make cuda_mpi``).
 
 Setup translator python environment (One time process)
 ------------------------------------------------------
- * Change directory to ``OP-PIC/opp_translator``.
- * Run ``setup_venv.sh`` (this will download the required libraries, including libclang and create the ``opp_venv`` python environment).
+ - Change directory to ``OP-PIC/opp_translator``.
+ - Run ``setup_venv.sh`` (this will download the required libraries, including libclang and create the ``opp_venv`` python environment).
 
 Compile application
 -------------------
 
- * Change directory to the required demonstrator application folder (the applications ready to code-generate will have the name in  format ``app_<app_name>``).
- * Run ``python3 $OPP_TRANSLATOR -v -I$OPP_PATH/include/ --file_paths <application_cpp_file>``. 
- * Compile the required application version using the make command. (`make` followed by the required parallelization). 
+ - Change directory to the required demonstrator application folder (the applications ready to code-generate will have the name in  format ``app_<app_name>``).
+ - Run ``python3 $OPP_TRANSLATOR -v -I$OPP_PATH/include/ --file_paths <application_cpp_file>``. 
+ - Compile the required application version using the make command. (`make` followed by the required parallelization). 
  
  For example, 
 
@@ -57,9 +57,9 @@ Compile application
 
    cd app_cabanapic; python3 $OPP_TRANSLATOR -v -I$OPP_PATH/include/ --file_paths cabanapic.cpp; make cuda_mpi
 
- A detail explanation can be found in the readme file of opp_translator folder and the required application folder.
+A detail explanation can be found in the readme file of opp_translator folder and the required application folder.
  
- In addition, ``app_<app_name>_cg`` will additionally include code-generated files, ready to compile directly using make commands.
+In addition, ``app_<app_name>_cg`` will additionally include code-generated files, ready to compile directly using make commands.
 
 Run the application
 -------------------
