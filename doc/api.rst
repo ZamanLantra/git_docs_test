@@ -115,7 +115,7 @@ OP-PIC C++ API
 (2) Dataset Layout
 ^^^^^^^^^^^^^^^^^^
 
-By default OP-PIC stores data in CPUs as AoS (Array of Structs) layout, matching what is supplied to :c:func:`opp_decl_dat()` and :c:func:`opp_decl_map()`, however, on GPUs, OP-PIC use SoA (Struct of Arrays) layouts using transformations.
+By default OP-PIC stores data in CPUs as AoS (Array of Structs) layout, matching what is supplied to `opp_decl_dat()` and `opp_decl_map()`, however, on GPUs, OP-PIC use SoA (Struct of Arrays) layouts using transformations.
 
 (3) Parallel Loops
 ^^^^^^^^^^^^^^^^^^
@@ -130,4 +130,54 @@ By default OP-PIC stores data in CPUs as AoS (Array of Structs) layout, matching
    :param set: The set to loop over.
    :param iter_type: The iteration type. Possible values are, :c:expr:`OPP_ITERATE_ALL` and :c:expr:`OPP_ITERATE_INJECTED`
    :param ...: The :c:type:`opp_arg` arguments passed to each invocation of the kernel.
+
+.. c:function:: void opp_particle_move(void (*kernel)(T *...), char const *name, opp_set set, opp_map c2c_map, opp_map p2c_map, ...)
+
+   This routine executes a parallelised loop over the given **particle set**, with arguments provided by the :c:func:`opp_arg_gbl()` and :c:func:`opp_arg_dat()` routines.
+
+   :param kernel: The kernel function to execute. The number of arguments to the kernel should match the number of :c:type:`opp_arg` arguments provided to this routine.
+   :param name: A name to be used for output diagnostics.
+   :param set: The set to loop over.
+   :param c2c_map: A cell to cell mapping to find the neighour cell from the current cell.
+   :param p2c_map: The particle to cell mapping to map to the underlying cell.
+   :param ...: The :c:type:`opp_arg` arguments passed to each invocation of the kernel.
+
+.. c:function:: opp_arg opp_arg_gbl(T *data, int dim, char *type, opp_access acc)
+
+   This routine defines an :c:type:`opp_arg` that may be used either to pass non-constant read-only data or to compute a global sum, maximum or minimum.
+
+   :param data: Source or destination data array.
+   :param dim: Number of data elements.
+   :param type: The datatype as a string. This is checked for consistency with **data** at run-time.
+   :param acc: The access type.
+
+   Valid access types for this routine are:
+
+   - :c:data:`OPP_READ`: Read-only.
+   - :c:data:`OPP_INC`: Global reduction to compute a sum.
+   - :c:data:`OPP_MAX`: Global reduction to compute a maximum.
+   - :c:data:`OPP_MIN`: Global reduction to compute a minimum.
+
+.. c:function:: opp_arg opp_arg_dat(opp_dat dat, opp_access acc) // for direct arguments
+   opp_arg opp_arg_dat(opp_dat dat, opp_map p2c_map, opp_access acc) // for single indirect arguments 
+   opp_arg opp_arg_dat(opp_dat dat, int idx, opp_map map, opp_access acc) // for single indirect arguments 
+   opp_arg opp_arg_dat(opp_dat dat, int idx, opp_map map, opp_map p2c_map, opp_access acc) // for double indirect arguments 
+
+   This routine defines an :c:type:`opp_arg` that can be used to pass a dataset either directly attached to the target :c:type:`opp_set` or attached to an :c:type:`opp_set` reachable through a mapping.
+
+   :param dat: The dataset.
+   :param acc: The access type.
+   :param p2c_map: Map from a particle to underlying cell (iterating set shuld be a particle set).
+   :param idx: The per-set-element index into the map to use. 
+   :param map: The mapping to use for indirection.
+
+   Valid access types for this routine are:
+
+   - :c:data:`OPP_READ`: Read-only.
+   - :c:data:`OPP_WRITE`: Write-only.
+   - :c:data:`OPP_RW`: Read and write.
+   - :c:data:`OPP_INC`: Increment or global reduction to compute a sum.
+
+   .. note::
+      An example of how these API calls are used in an application can be found in the Developer Guide Section.
 
