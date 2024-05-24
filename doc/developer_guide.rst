@@ -841,7 +841,7 @@ Step 7 - Handing it all to OP-PIC
 Once the developer sequential version has been created and the numerical output validates the application can be prepared to obtain a developer distributed memory parallel version. 
 This step can be completed to obtain a parallel executable that works with distributed memory MPI.
 
-(1) Distributing data over MPI ranks
+(a) Distributing data over MPI ranks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 One way is to load the mesh into the OPP_ROOT (rank 0) and then distribute over MPI ranks. 
 For an example, ``check distribute_data_over_ranks`` function in ``OP-PIC/app_fempic/fempic_misc_mesh_loader.h``.
@@ -902,7 +902,7 @@ Additionally all ``printf`` statements should use ``opp_printf`` which will add 
 ``OPP_RUN_ON_ROOT()`` can be used to run only on root. 
 We can also use timers, utilizing ``opp_profiler->start("name")`` and ``opp_profiler->end("name")``, which will capture the time spent between these two calls and log it once the application calls ``opp_exit()``.
 
-(2) Partitioning data over MPI ranks
+(b) Partitioning data over MPI ranks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Add the OP-PIC partitioner call ``opp_partition`` to the code in order to signal to the MPI back-end, the point in the program that all mesh data have been defined and mesh can be partitioned and MPI halos can be created. 
@@ -929,5 +929,27 @@ See the API documentation for partitioner options.
 In this case a special custom partitioning scheme is used to minimize particle communications.
 That is done by the enrichment of ``c_colors`` within a user written ``fempic_color_block`` function (``OP-PIC/app_fempic/fempic_misc_mesh_colour.h``).
 
+Step 8 - Code generation
+------------------------
 
+Now its time to generate the code for parallel versions. 
+First we should move the elemental kernels to header files so that after the code generation the modified main application will not have the same elemental kernel definitions. 
+This is only required since the code-generator removes the ``CONST_`` global variables from the main c++ file (however, commenting a single line of code in code-generator will allow writing elemental kernels in the same c++ file).
+
+Additionally, FemPIC requires a files solver that uses linear sparse matrix solving, hence we have implemented it as a separate PETSc based solver that can be found at ``OP-PIC/app_fempic/field_solver/`` folder.
+
+The complete regular and the ``HDF5`` FemPIC applications can be found at ``OP-PIC/app_fempic/`` which can be independently code generated using the below.
+
+In general the below command can be used to code-generate.
+
+.. code-block:: bash
+
+    python3 $OPP_TRANSLATOR -v -I$OPP_PATH/include/ --file_paths <application_cpp_file>
+
+Specifically, for regular OP-PIC application without HDF5, use ``python3 $OPP_TRANSLATOR -v -I$OPP_PATH/include/ --file_paths fempic.cpp``.
+
+If HDF5 is required, invoke the command: ``python3 $OPP_TRANSLATOR -v -I$OPP_PATH/include/ --file_paths fempic_hdf5.cpp``.
+
+Once the code-generator is invoked, a ``fempic_opp.cpp`` or ``fempic_hdf5_opp.cpp`` file and ``seq``, ``omp``, ``mpi``, ``cuda`` and ``hip`` folders will be created, 
+including a ``opp_kernels.<cpp|cu>`` file and a loop kernel header file per unique ``opp_par_loop`` or ``opp_particle_move`` loop per folder.
 
