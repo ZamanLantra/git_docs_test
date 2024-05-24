@@ -159,11 +159,16 @@ By default OP-PIC stores data in CPUs as AoS (Array of Structs) layout, matching
    - :c:data:`OPP_MIN`: Global reduction to compute a minimum.
 
 **// for direct arguments**
+
 .. c:function:: opp_arg opp_arg_dat(opp_dat dat, opp_access acc) 
+
 **// for single indirect arguments**
+
 .. c:function:: opp_arg opp_arg_dat(opp_dat dat, opp_map p2c_map, opp_access acc)
    opp_arg opp_arg_dat(opp_dat dat, int idx, opp_map map, opp_access acc)
+
 **// for double indirect arguments**
+
 .. c:function:: opp_arg opp_arg_dat(opp_dat dat, int idx, opp_map map, opp_map p2c_map, opp_access acc) 
 
    This routine defines an :c:type:`opp_arg` that can be used to pass a dataset either directly attached to the target :c:type:`opp_set` or attached to an :c:type:`opp_set` reachable through a mapping.
@@ -187,6 +192,22 @@ By default OP-PIC stores data in CPUs as AoS (Array of Structs) layout, matching
 (4) Particle injections
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+.. c:function:: void opp_increase_particle_count(opp_set p_set, int parts_to_insert)
 
+   This routine will increase the particle set size and capacity by the given amount.
+
+   :param p_set: Particle set.
+   :param parts_to_insert: Number of particles to insert.
+
+.. c:function:: void opp_inc_part_count_with_distribution(opp_set p_set, int parts_to_insert, opp_dat part_dist)
+
+   This routine will increase the particle set size and capacity by the given amount and assigns :c:expr:`p2c_map` using :c:expr:`part_dist`.
+
+   :param p_set: Particle set.
+   :param parts_to_insert: Number of particles to insert.
+   :param part_dist: Particle distribution :c:expr:`opp_dat`.
+
+   .. note::
+      An example of how these API calls are used in an application can be found in the Developer Guide Section.
 
 
