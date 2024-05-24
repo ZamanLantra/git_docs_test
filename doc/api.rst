@@ -115,7 +115,7 @@ OP-PIC C++ API
 (2) Dataset Layout
 ^^^^^^^^^^^^^^^^^^
 
-By default OP-PIC stores data in CPUs as AoS (Array of Structs) layout, matching what is supplied to `opp_decl_dat()` and `opp_decl_map()`, however, on GPUs, OP-PIC use SoA (Struct of Arrays) layouts using transformations.
+By default OP-PIC stores data in CPUs as AoS (Array of Structs) layout, matching what is supplied to :c:func:`opp_decl_dat()` and :c:func:`opp_decl_map()`, however, on GPUs, OP-PIC use SoA (Struct of Arrays) layouts using transformations.
 
 (3) Parallel Loops
 ^^^^^^^^^^^^^^^^^^
