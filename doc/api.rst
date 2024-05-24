@@ -92,7 +92,7 @@ OP-PIC C++ API
    :param bounding_box: A `opp::BoundingBox` indicating the simulation boundaries
 
    .. note::
-      The bounding box object can be created by providing a mesh dat that has its positions (like node positions) using :c:func:`opp::BoundingBox(const opp_dat pos_dat, int dim)` or by providing the calculated minimum and maximum domain coordinates using :c:func:`opp::BoundingBox(int dim, opp_point minCoordinate, opp_point maxCoordinate)`.
+      The bounding box object can be created by providing a mesh dat that has its positions (like node positions) using :c:expr:`opp::BoundingBox(const opp_dat pos_dat, int dim)` or by providing the calculated minimum and maximum domain coordinates using :c:expr:`opp::BoundingBox(int dim, opp_point minCoordinate, opp_point maxCoordinate)`.
 
 .. c:function:: void opp_partition(std::string lib_name, opp_set prime_set, opp_map prime_map, opp_dat dat)
 
