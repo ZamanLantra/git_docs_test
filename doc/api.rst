@@ -158,16 +158,16 @@ By default OP-PIC stores data in CPUs as AoS (Array of Structs) layout, matching
    - :c:data:`OPP_MAX`: Global reduction to compute a maximum.
    - :c:data:`OPP_MIN`: Global reduction to compute a minimum.
 
-**// for direct arguments**
+**For direct arguments**
 
 .. c:function:: opp_arg opp_arg_dat(opp_dat dat, opp_access acc) 
 
-**// for single indirect arguments**
+**For single indirect arguments**
 
 .. c:function:: opp_arg opp_arg_dat(opp_dat dat, opp_map p2c_map, opp_access acc)
    opp_arg opp_arg_dat(opp_dat dat, int idx, opp_map map, opp_access acc)
 
-**// for double indirect arguments**
+**For double indirect arguments**
 
 .. c:function:: opp_arg opp_arg_dat(opp_dat dat, int idx, opp_map map, opp_map p2c_map, opp_access acc) 
 
@@ -210,4 +210,29 @@ By default OP-PIC stores data in CPUs as AoS (Array of Structs) layout, matching
    .. note::
       An example of how these API calls are used in an application can be found in the Developer Guide Section.
 
+(5) HDF5 I/O
+^^^^^^^^^^^^
+
+`HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`_ has become the *de facto* format for parallel file I/O, with various other standards like `CGNS <https://cgns.github.io/hdf5.html>`_ layered on top. 
+To make it as easy as possible for users to develop distributed-memory OP-PIC applications, we provide alternatives to some of the OP-PIC routines in which the data is read by OP-PIC from an HDF5 file, instead of being supplied by the user. 
+This is particularly useful for distributed memory MPI systems where the user would otherwise have to manually scatter data arrays over nodes prior to initialisation.
+
+.. c:function:: opp_set opp_decl_set_hdf5(char const *file, char const *name)
+
+   Equivalent to :c:func:`opp_decl_set()` but takes a **file** instead of **size**, reading in the set size from the HDF5 file using the keyword **name**.
+
+.. c:function:: opp_set opp_decl_particle_set_hdf5(char const *file, char const *name, opp_set cells_set)
+
+   Equivalent to :c:func:`opp_decl_particle_set()` but takes a **file** instead of **size**, reading in the set size from the HDF5 file using the keyword **name**.
+
+.. c:function:: opp_map opp_decl_map_hdf5(opp_set from, opp_set to, int dim, char const *file, char const *name)
+
+   Equivalent to :c:func:`opp_decl_map()` but takes a **file** instead of **imap**, reading in the mappiing table from the HDF5 file using the keyword **name**.
+
+.. c:function:: opp_dat opp_decl_dat_hdf5(opp_set set, int dim, opp_data_type dtype, char const *file, char const *name)
+
+   Equivalent to :c:func:`opp_decl_dat()` but takes a **file** instead of **data**, reading in the dataset from the HDF5 file using the keyword **name**.
+
+   .. warning::
+      The number of data elements specified by the **dim** parameter must match the number of data elements present in the HDF5 file.
 
