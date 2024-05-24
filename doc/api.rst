@@ -71,7 +71,7 @@ OP-PIC C++ API
    .. note::
       At present **dim** must be an integer literal or a :c:expr:`#define`
 
-.. c:function:: template <typename T> void opp_decl_const(int dim, T* data, const char* name)
+.. c:function:: void opp_decl_const(int dim, T* data, const char* name)
 
    This routine defines constant data with global scope that can be used in kernel functions.
 
@@ -120,7 +120,7 @@ By default OP-PIC stores data in CPUs as AoS (Array of Structs) layout, matching
 (3) Parallel Loops
 ^^^^^^^^^^^^^^^^^^
 
-.. c:function:: void opp_par_loop(void (*kernel)(T *...), char const *name, opp_set set, opp_iterate_type iter_type, ...)
+.. c:function:: void opp_par_loop(void (*kernel)(...), char const *name, opp_set set, opp_iterate_type iter_type, ...)
 
    This routine executes a parallelised loop over the given **set**, with arguments provided by the :c:func:`opp_arg_gbl()` and :c:func:`opp_arg_dat()` routines.
    When set is a particle set, it will make use of :c:expr:`iter_type` to decide whether to iterate over all particles or only over the injected particles.
@@ -131,7 +131,7 @@ By default OP-PIC stores data in CPUs as AoS (Array of Structs) layout, matching
    :param iter_type: The iteration type. Possible values are, :c:expr:`OPP_ITERATE_ALL` and :c:expr:`OPP_ITERATE_INJECTED`
    :param ...: The :c:type:`opp_arg` arguments passed to each invocation of the kernel.
 
-.. c:function:: void opp_particle_move(void (*kernel)(T *...), char const *name, opp_set set, opp_map c2c_map, opp_map p2c_map, ...)
+.. c:function:: void opp_particle_move(void (*kernel)(...), char const *name, opp_set set, opp_map c2c_map, opp_map p2c_map, ...)
 
    This routine executes a parallelised loop over the given **particle set**, with arguments provided by the :c:func:`opp_arg_gbl()` and :c:func:`opp_arg_dat()` routines.
 
