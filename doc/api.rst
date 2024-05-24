@@ -71,7 +71,8 @@ Initialisation and Termination
    .. note::
       At present **dim** must be an integer literal or a :c:expr:`#define`
 
-.. c:function:: template <typename T> void opp_decl_const(int dim, T* data, const char* name)
+.. c:function:: template <typename T> 
+   void opp_decl_const(int dim, T* data, const char* name)
 
    This routine defines constant data with global scope that can be used in kernel functions.
 
