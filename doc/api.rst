@@ -158,16 +158,19 @@ By default OP-PIC stores data in CPUs as AoS (Array of Structs) layout, matching
    - :c:data:`OPP_MAX`: Global reduction to compute a maximum.
    - :c:data:`OPP_MIN`: Global reduction to compute a minimum.
 
-.. c:function:: opp_arg opp_arg_dat(opp_dat dat, opp_access acc) // for direct arguments
-   opp_arg opp_arg_dat(opp_dat dat, opp_map p2c_map, opp_access acc) // for single indirect arguments 
-   opp_arg opp_arg_dat(opp_dat dat, int idx, opp_map map, opp_access acc) // for single indirect arguments 
-   opp_arg opp_arg_dat(opp_dat dat, int idx, opp_map map, opp_map p2c_map, opp_access acc) // for double indirect arguments 
+**// for direct arguments**
+.. c:function:: opp_arg opp_arg_dat(opp_dat dat, opp_access acc) 
+**// for single indirect arguments**
+.. c:function:: opp_arg opp_arg_dat(opp_dat dat, opp_map p2c_map, opp_access acc)
+   opp_arg opp_arg_dat(opp_dat dat, int idx, opp_map map, opp_access acc)
+**// for double indirect arguments**
+.. c:function:: opp_arg opp_arg_dat(opp_dat dat, int idx, opp_map map, opp_map p2c_map, opp_access acc) 
 
    This routine defines an :c:type:`opp_arg` that can be used to pass a dataset either directly attached to the target :c:type:`opp_set` or attached to an :c:type:`opp_set` reachable through a mapping.
 
    :param dat: The dataset.
    :param acc: The access type.
-   :param p2c_map: Map from a particle to underlying cell (iterating set shuld be a particle set).
+   :param p2c_map: Map from a particle to underlying cell.
    :param idx: The per-set-element index into the map to use. 
    :param map: The mapping to use for indirection.
 
@@ -180,4 +183,10 @@ By default OP-PIC stores data in CPUs as AoS (Array of Structs) layout, matching
 
    .. note::
       An example of how these API calls are used in an application can be found in the Developer Guide Section.
+
+(4) Particle injections
+^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
 
