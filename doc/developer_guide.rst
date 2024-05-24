@@ -927,7 +927,7 @@ Even in the sequential execution this can be scoped between ``ifdef`` to avoid c
 See the API documentation for partitioner options. 
 
 In this case a special custom partitioning scheme is used to minimize particle communications.
-That is done by the enrichment of ``c_colors`` within a user written ``fempic_color_block`` function (``OP-PIC/app_fempic/fempic_misc_mesh_colour.h``).
+That is done by the enrichment of ``c_colors`` within a user written ``fempic_color_block`` function in ``OP-PIC/app_fempic/fempic_misc_mesh_colour.h``.
 
 Step 8 - Code generation
 ------------------------
@@ -950,11 +950,15 @@ In general the below command can be used to code-generate.
 
 Specifically, for regular OP-PIC application without HDF5, use:
 
-``python3 $OPP_TRANSLATOR -v -I$OPP_PATH/include/ --file_paths fempic.cpp``.
+.. code-block:: bash
+
+    python3 $OPP_TRANSLATOR -v -I$OPP_PATH/include/ --file_paths fempic.cpp
 
 If HDF5 is required, invoke the command: 
 
-``python3 $OPP_TRANSLATOR -v -I$OPP_PATH/include/ --file_paths fempic_hdf5.cpp``.
+.. code-block:: bash
+
+    python3 $OPP_TRANSLATOR -v -I$OPP_PATH/include/ --file_paths fempic_hdf5.cpp
 
 Once the code-generator is invoked, a ``fempic_opp.cpp`` or ``fempic_hdf5_opp.cpp`` file and ``seq``, ``omp``, ``mpi``, ``cuda`` and ``hip`` folders will be created, 
 including a ``opp_kernels.<cpp|cu>`` file and a loop kernel header file per unique ``opp_par_loop`` or ``opp_particle_move`` loop per folder.
