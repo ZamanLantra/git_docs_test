@@ -936,7 +936,9 @@ Now its time to generate the code for parallel versions.
 First we should move the elemental kernels to header files so that after the code generation the modified main application will not have the same elemental kernel definitions. 
 This is only required since the code-generator removes the ``CONST_`` global variables from the main c++ file (however, commenting a single line of code in code-generator will allow writing elemental kernels in the same c++ file).
 
-Additionally, FemPIC requires a files solver that uses linear sparse matrix solving, hence we have implemented it as a separate PETSc based solver that can be found at ``OP-PIC/app_fempic/field_solver/`` folder.
+Additionally, FemPIC requires a files solver that uses linear sparse matrix solving, hence we have implemented it as a separate PETSc based solver that can be found at:
+
+``OP-PIC/app_fempic/field_solver/``
 
 The complete regular and the ``HDF5`` FemPIC applications can be found at ``OP-PIC/app_fempic/`` which can be independently code generated using the below.
 
@@ -946,9 +948,13 @@ In general the below command can be used to code-generate.
 
     python3 $OPP_TRANSLATOR -v -I$OPP_PATH/include/ --file_paths <application_cpp_file>
 
-Specifically, for regular OP-PIC application without HDF5, use ``python3 $OPP_TRANSLATOR -v -I$OPP_PATH/include/ --file_paths fempic.cpp``.
+Specifically, for regular OP-PIC application without HDF5, use:
 
-If HDF5 is required, invoke the command: ``python3 $OPP_TRANSLATOR -v -I$OPP_PATH/include/ --file_paths fempic_hdf5.cpp``.
+``python3 $OPP_TRANSLATOR -v -I$OPP_PATH/include/ --file_paths fempic.cpp``.
+
+If HDF5 is required, invoke the command: 
+
+``python3 $OPP_TRANSLATOR -v -I$OPP_PATH/include/ --file_paths fempic_hdf5.cpp``.
 
 Once the code-generator is invoked, a ``fempic_opp.cpp`` or ``fempic_hdf5_opp.cpp`` file and ``seq``, ``omp``, ``mpi``, ``cuda`` and ``hip`` folders will be created, 
 including a ``opp_kernels.<cpp|cu>`` file and a loop kernel header file per unique ``opp_par_loop`` or ``opp_particle_move`` loop per folder.
