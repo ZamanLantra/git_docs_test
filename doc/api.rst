@@ -26,7 +26,7 @@ OP-PIC C++ API
 
    :param size: Number of set elements.
    :param name: A name to be used for output diagnostics.
-   :returns: A set ID.
+   :returns: A set pointer.
 
 .. c:function:: opp_set opp_decl_particle_set(char const *name, opp_set cells_set)
 
@@ -34,7 +34,7 @@ OP-PIC C++ API
 
    :param name: A name to be used for output diagnostics.
    :param size: The underlying mesh set related.
-   :returns: A set ID.
+   :returns: A set pointer.
 
 .. c:function:: opp_set opp_decl_particle_set(int size, char const *name, opp_set cells_set)
 
@@ -43,7 +43,7 @@ OP-PIC C++ API
    :param size: Number of particles in the set.
    :param name: A name to be used for output diagnostics.
    :param size: The underlying mesh set related.
-   :returns: A set ID.
+   :returns: A set pointer.
 
 .. c:function:: opp_map opp_decl_map(opp_set from, opp_set to, int dim, int *imap, char const *name)
 
@@ -82,14 +82,13 @@ OP-PIC C++ API
    .. note::
       The variable is available in the kernel functions with type :c:expr:`T` with type :c:expr:`T*`. Hence even if **dim** is :c:expr:`1`, it should be accessed as :c:expr:`CONST_+<var_name>[0]` within the kernel.
 
-.. c:function:: void opp_init_direct_hop(double grid_spacing, int dim, const opp_dat c_gbl_id, const opp::BoundingBox& bounding_box)
+.. c:function:: void opp_init_direct_hop(double grid_spacing, const opp_dat c_gbl_id, const opp::BoundingBox& bounding_box)
 
    Existance of this routine suggest the code-generator to extract information from :c:func:`opp_particle_move()` to generate direct-hop related code. Specifically, it will create direct-hop structure data and include direct hop related code within the particle move loop.
 
    :param grid_spacing: Direct hop structured mesh spacing.
-   :param dim: Dimension of the simulation (1D, 2D or 3D).
    :param c_gbl_id: An `opp_dat` with global cell indices (mainly required to translate cell indices in an MPI code simulation, since mappings get renumbered).
-   :param bounding_box: A `opp::BoundingBox` indicating the simulation boundaries
+   :param bounding_box: A `opp::BoundingBox` indicating the simulation boundaries.
 
    .. note::
       The bounding box object can be created by providing a mesh dat that has its positions (like node positions) using :c:expr:`opp::BoundingBox(const opp_dat pos_dat, int dim)` or by providing the calculated minimum and maximum domain coordinates using :c:expr:`opp::BoundingBox(int dim, opp_point minCoordinate, opp_point maxCoordinate)`.
@@ -111,6 +110,19 @@ OP-PIC C++ API
 
    .. note::
       In addition to partitining the primary set, :c:func:`opp_partition` will partition the other mesh sets using `opp_maps` available. Then Halos and halo communication buffers will be created. Additionally, halo related particle communication data will get initialized.
+
+.. c:funtion void opp_particle_sort(opp_set set)
+
+   This routine sorts the particle set according to the p2c_map of that particle set.
+
+   :param set: particle set.
+
+.. c:function void opp_reset_dat(opp_dat dat, T* val)
+
+   This routine resets the dat with the values provided in the val C-style array pointer. This function is implemented as a templated function.
+
+   :param dat: dat to reset.
+   :param val: values to set per element.
 
 (2) Dataset Layout
 ^^^^^^^^^^^^^^^^^^
