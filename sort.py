@@ -38,10 +38,34 @@ def mergeSort(lst):
     arr2 = mergeSort(lst[mid:])
     return merge(arr1, arr2)
 
+def findMinIdx(lst, left, right):
+    if left == right:
+        return left
+    k = findMinIdx(lst, left+1, right)
+    return left if lst[left] < lst[k] else k
 
-
+def selectionSortRec(lst, idx = 0):
+    n = len(lst)-1
+    if idx == n:
+        return
+    minIdx = findMinIdx(lst, idx, n)
+    if (minIdx != idx):
+        lst[idx], lst[minIdx] = lst[minIdx], lst[idx]
+    selectionSortRec(lst, idx+1)
 
 ll = [2,6,5,3,8,7,1,0]
-print(insertion(ll))
+print(f'insertion sort {insertion(ll.copy())}')
+print(ll)
 
-print(mergeSort(ll))
+print(f'merge sort {mergeSort(ll.copy())}')
+print(ll)
+
+lst = ll.copy()
+selectionSortRec(lst)
+print(f'recursive selection sort {lst}')
+
+
+
+
+
+
