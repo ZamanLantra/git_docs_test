@@ -53,6 +53,17 @@ def selectionSortRec(lst, idx = 0):
         lst[idx], lst[minIdx] = lst[minIdx], lst[idx]
     selectionSortRec(lst, idx+1)
 
+def selectionSort(lst):
+    for i in range(len(lst)-1):
+        min_idx = i
+        for j in range(i,len(lst)):
+            if lst[j] < lst[min_idx]:
+                min_idx = j
+        if i != min_idx:
+            lst[min_idx], lst[i] = lst[i], lst[min_idx]
+    
+    return lst
+    
 ll = [2,6,5,3,8,7,1,0]
 print(f'insertion sort {insertion(ll.copy())}')
 print(ll)
@@ -63,9 +74,10 @@ print(ll)
 lst = ll.copy()
 selectionSortRec(lst)
 print(f'recursive selection sort {lst}')
+print(ll)
 
-
-
+print(f'selection sort {selectionSort(ll.copy())}')
+print(ll)
 
 
 
