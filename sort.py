@@ -1,6 +1,6 @@
 
 def bubble(lst):
-    for i in range (len(lst)-1):
+    for i in range (len(lst)):
         for j in range(len(lst)-1-i):
             if lst[j] > lst[j+1]:
                 lst[j], lst[j+1] = lst[j+1], lst[j]
@@ -12,6 +12,13 @@ def insertion(lst):
         while j > 0 and lst[j-1] > lst[j]:
             lst[j], lst[j-1] = lst[j-1], lst[j]
             j -= 1
+    return lst
+
+def insertion2(lst):
+    for i in range (1, len(lst)):
+        for j in range(i,0,-1):
+            if lst[j] < lst[j-1]:
+                lst[j], lst[j-1] = lst[j-1], lst[j]
     return lst
 
 def merge(lst1, lst2):
@@ -69,6 +76,9 @@ ll = [12, 3, 1, 16, 7, 10, 6, 18, 14, 8, 5, 4, 15, 2, 11, 9, 17, 13]
 print(f'insertion sort {insertion(ll.copy())}')
 print(ll)
 
+print(f'insertion2 sort {insertion2(ll.copy())}')
+print(ll)
+
 print(f'merge sort {mergeSort(ll.copy())}')
 print(ll)
 
@@ -80,5 +90,6 @@ print(ll)
 print(f'selection sort {selectionSort(ll.copy())}')
 print(ll)
 
-
+print(f'bubble sort {bubble(ll.copy())}')
+print(ll)
 
