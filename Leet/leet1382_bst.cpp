@@ -128,7 +128,6 @@ int main() {
 
     constexpr int tree_size = 50;
     std::vector<int> nodeValues(tree_size);
-
     std::iota(nodeValues.begin(), nodeValues.end(), 1);
 
     BST<int> bst;
@@ -138,6 +137,7 @@ int main() {
     std::vector<int> preorder;
     bst.preorder_traversal(preorder);
 
+    std::cout << "After preorder_traversal (before balance): ";
     for (auto i : preorder)
         std::cout << i << ", ";
     std::cout << std::endl;
@@ -149,6 +149,7 @@ int main() {
     preorder.clear();
     bst.preorder_traversal(preorder);
 
+    std::cout << "After preorder_traversal (after balance): ";
     for (auto i : preorder)
         std::cout << i << ", ";
     std::cout << std::endl;
