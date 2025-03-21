@@ -56,34 +56,69 @@ class AVL:
 
         balance = self.get_balance(parent)
 
-        if balance > 1:
-            if value > parent.left.value:
-                parent.left = self.left_rotate(parent.left)
+        if balance > 1 and value < parent.left.value:
             return self.right_rotate(parent)
 
-        if balance < -1:
-            if value < parent.right.value:
-                parent.right = self.right_rotate(parent.right)
+        if balance < -1 and value > parent.right.value:
             return self.left_rotate(parent)
 
-        # if balance > 1 and value < parent.left.value:
-        #     return self.right_rotate(parent)
+        if balance > 1 and value > parent.left.value:
+            parent.left = self.left_rotate(parent.left)
+            return self.right_rotate(parent)
 
-        # if balance < -1 and value > parent.right.value:
-        #     return self.left_rotate(parent)
-
-        # if balance > 1 and value > parent.left.value:
-        #     parent.left = self.left_rotate(parent.left)
-        #     return self.right_rotate(parent)
-
-        # if balance < -1 and value < parent.right.value:
-        #     parent.right = self.right_rotate(parent.right)
-        #     return self.left_rotate(parent)  
+        if balance < -1 and value < parent.right.value:
+            parent.right = self.right_rotate(parent.right)
+            return self.left_rotate(parent)  
         
         return parent      
 
+    def __find_min(self, parent):
+        if parent.left is None:
+            return parent
+        return self.__find_min(parent.left)
+    
+    def find_min(self):
+        return self.__find_min(self.root).value
+
     def insert(self, value):   
         self.root = self.__insert(self.root, value)
+
+    def __delete(self, parent, value):
+        if parent is None:
+            return
+        if parent.value < value:
+            parent.right = self.__delete(parent.right, value)
+        elif parent.value > value:
+            parent.left = self.__delete(parent.left, value)
+        else:
+            if parent.left is None:
+                return parent.right
+            elif parent.right is None:
+                return parent.left
+            else:            
+                inorder_successor = self.__find_min(parent.right)
+                parent.value = inorder_successor.value
+                parent.right = self.__delete(parent.right, inorder_successor.value)
+
+        parent.height = 1 + max(self.height(parent.left), self.height(parent.right))
+        balance = self.get_balance(parent)
+
+        if balance > 1 and value < parent.left.value:
+            return self.right_rotate(parent)
+        if balance < -1 and value > parent.right.value:
+            return self.left_rotate(parent)
+        if balance > 1 and value > parent.left.value:
+            parent.left = self.left_rotate(parent.left)
+            return self.right_rotate(parent)
+        if balance < -1 and value < parent.right.value:
+            parent.right = self.right_rotate(parent.right)
+            return self.left_rotate(parent)
+
+        return parent 
+
+    def delete(self, value):
+        if self.root is not None:
+            self.root = self.__delete(self.root, value)
 
     def __inorder_traversal(self, parent, lst):
         if parent is None:
@@ -135,17 +170,35 @@ avl.insert(128)
 avl.insert(121)
 avl.insert(210)
 
-print("inorder_traversal")
-print(avl.inorder_traversal())
+print(f"inorder_traversal {avl.inorder_traversal()}")
 
+print(f"find_min {avl.find_min()}")
+
+avl.delete(128)
+print(f"inorder_traversal {avl.inorder_traversal()}")
+
+avl.delete(15)
+print(f"inorder_traversal {avl.inorder_traversal()}")
+
+print(f"find_min {avl.find_min()}")
 
 
 avl = AVL()
 for i in range(1, 50):
     avl.insert(i)
 
-print("inorder_traversal (r2)")
-print(avl.inorder_traversal())
+print(f"inorder_traversal (r2) {avl.inorder_traversal()}")
+print(f"preorder_traversal (r2) {avl.preorder_traversal()}")
+print(f"find_min {avl.find_min()}")
 
-print("preorder_traversal (r2)")
-print(avl.preorder_traversal())
+avl.delete(25)
+print(f"inorder_traversal {avl.inorder_traversal()}")
+print(f"find_min {avl.find_min()}")
+
+avl.delete(1)
+print(f"inorder_traversal {avl.inorder_traversal()}")
+print(f"find_min {avl.find_min()}")
+
+avl.delete(49)
+print(f"inorder_traversal {avl.inorder_traversal()}")
+print(f"find_min {avl.find_min()}")
