@@ -29,6 +29,38 @@ class BST:
         else:
             self.__insert(self.root, value)
     
+    def __min(self, parent):
+        if parent.left is None:
+            return parent
+        return self.__min(parent.left)
+    
+    def min(self):
+        m = self.__min(self.root)
+        return m.value if m is not None else -1 
+    
+    def __delete(self, parent, value):
+        if parent is None:
+            return parent
+        
+        if parent.value < value:
+            parent.right = self.__delete(parent.right, value)
+        elif parent.value > value:
+            parent.left = self.__delete(parent.left, value)
+        else:
+            if parent.left is None:
+                return parent.right
+            elif parent.right is None:
+                return parent.left
+
+            inorder_successor = self.__min(parent.right)
+            parent.value = inorder_successor.value
+            parent.right = self.__delete(parent.right, inorder_successor.value)
+
+        return parent
+
+    def delete(self, value):
+        self.root = self.__delete(self.root, value)
+
     def __inorder_traversal(self, parent, lst):
         if parent is None:
             return
@@ -92,9 +124,17 @@ bst.insert(128)
 bst.insert(121)
 bst.insert(210)
 
-print("inorder_traversal")
-print(bst.inorder_traversal())
+print(f"inorder_traversal {bst.inorder_traversal()}")
 
+print(f"find_min {bst.min()}")
+
+bst.delete(128)
+print(f"inorder_traversal {bst.inorder_traversal()}")
+
+bst.delete(15)
+print(f"inorder_traversal {bst.inorder_traversal()}")
+
+print(f"find_min {bst.min()}")
 
 
 bst = BST()
@@ -108,3 +148,15 @@ bst.balance()
 
 print("preorder_traversal (after balance)")
 print(bst.preorder_traversal())
+
+bst.delete(25)
+print(f"inorder_traversal {bst.inorder_traversal()}")
+print(f"find_min {bst.min()}")
+
+bst.delete(1)
+print(f"inorder_traversal {bst.inorder_traversal()}")
+print(f"find_min {bst.min()}")
+
+bst.delete(49)
+print(f"inorder_traversal {bst.inorder_traversal()}")
+print(f"find_min {bst.min()}")
