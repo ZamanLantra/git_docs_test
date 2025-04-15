@@ -1,4 +1,4 @@
-// zamanlantra@ZamansMcBookPro Study % g++ -std=c++17 -o inheritance inheritance.cpp 
+// zamanlantra@ZamansMcBookPro Study % g++ -std=c++20 -o inheritance inheritance.cpp 
 // zamanlantra@ZamansMcBookPro Study % ./inheritance 
 
 // Implement a type-erased heterogeneous container that can hold objects of any type implementing a specific interface, without using inheritance in the stored types.
@@ -66,6 +66,9 @@ public:
     void act() const override { cout << "Goblin Act of " << m_name << "\n"; }
 };
 
+template<typename T>
+concept DerivedFromIBase = std::is_base_of<IBase, T>::value;
+
 // ======== Container ========
 class ActorContainer {
 private:
@@ -76,11 +79,18 @@ public:
         data.push_back(std::move(ptr));
     }
     template <typename T, typename... Args>
-    void emplace(Args&&... args) {
+    void emplace_assert(Args&&... args) {
         static_assert(std::is_base_of<IBase, T>::value, "T must derive from IBase");
         data.push_back(std::make_unique<T>(std::forward<Args>(args)...));
     }
-
+    template <typename T, typename... Args, typename = std::enable_if_t<std::is_base_of<IBase, T>::value>>
+    void emplace_C14(Args&&... args) {
+        data.push_back(std::make_unique<T>(std::forward<Args>(args)...));
+    }
+    template <DerivedFromIBase T, typename... Args>
+    void emplace_C20(Args&&... args) {
+        data.push_back(std::make_unique<T>(std::forward<Args>(args)...));
+    }
     class iterator {
 public:
         iterator(vector<unique_ptr<IBase>>* data, int idx, bool forward) : m_data(data), m_index(idx), m_forward(forward) { }
@@ -105,12 +115,16 @@ private:
 int main() {
     ActorContainer c;
     c.add(make_unique<Fireball>("🔥"));
-    c.add(make_unique<Fireball>("🔥🔥"));
     c.add(make_unique<Robot>("🤖"));
     c.add(make_unique<Goblin>("👺"));
     
-    c.emplace<Robot>("🤖🤖🤖");
-    c.emplace<Fireball>("👺👺👺");
+    c.emplace_assert<Robot>("🤖🤖🤖");
+    c.emplace_C14<Fireball>("👺👺👺");
+    c.emplace_C20<Fireball>("🔥🔥🔥");
+
+    // c.emplace_assert<int>();
+    // c.emplace_C14<double>();     // SFINAE = Substitution Failure Is Not An Error - C++11
+    // c.emplace_C20<float>();      // concepts C++20
 
     cout << "\nPrinting forward START\n";
     for (const auto& actor : c) {
