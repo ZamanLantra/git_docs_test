@@ -24,74 +24,73 @@
 
 using namespace std;
 
-class Base {
-protected:
-    string m_name = "";
-    Base(string name) : m_name(name) { 
-        cout << "\tBase Constructor " << m_name << "\n";
-    }
+// ======== interface ========
+class IBase {
 public:
-    Base() = delete;
-    virtual ~Base() { 
-        cout << "\tBase Destructor " << m_name << "\n";
-    }
-    virtual std::string name() const {
-        return m_name;
-    }
-    virtual void act() const {
-        cout << "\tBase Act of " << m_name << "\n";
-    }
+    virtual ~IBase() = default;
+    virtual std::string name() const = 0;
+    virtual void act() const = 0;
 };
 
-class Fireball : public Base {
+// ======== derived classes ========
+class Fireball : public IBase {
 private:
+    string m_name = "";
     int m_value = 0;
 public:
-    Fireball(string name) : Base(name) { cout << "Fireball Constructor " << m_name << "\n"; }
+    Fireball(string name) : m_name(name) { cout << "Fireball Constructor " << m_name << "\n"; }
     ~Fireball() override { cout << "Fireball Destructor " << m_name << "\n"; }
     std::string name() const override { return string("Fireball#") + m_name; }
     void act() const override { cout << "Fireball Act of " << m_name << "\n"; }
 };
 
-class Robot : public Base {
+class Robot : public IBase {
 private:
+    string m_name = "";
     int m_value = 0;
 public:
-    Robot(string name) : Base(name) { cout << "Robot Constructor " << m_name << "\n"; }
+    Robot(string name) : m_name(name) { cout << "Robot Constructor " << m_name << "\n"; }
     ~Robot() override { cout << "Robot Destructor " << m_name << "\n"; }
     std::string name() const override { return string("Robot#") + m_name; }
     void act() const override { cout << "Robot Act of " << m_name << "\n"; }
 };
 
-class Goblin : public Base {
-private:
+class Goblin : public IBase {
+private:    
+    string m_name = "";
     int m_value = 0;
 public:
-    Goblin(string name) : Base(name) { cout << "Goblin Constructor " << m_name << "\n"; }
+    Goblin(string name) : m_name(name) { cout << "Goblin Constructor " << m_name << "\n"; }
     ~Goblin() override { cout << "Goblin Destructor " << m_name << "\n"; }
     std::string name() const override { return string("Goblin#") + m_name; }
     void act() const override { cout << "Goblin Act of " << m_name << "\n"; }
 };
 
+// ======== Container ========
 class ActorContainer {
 private:
-    vector<unique_ptr<Base>> data;
+    vector<unique_ptr<IBase>> data;
 public:
     ActorContainer() {}
-    void add(unique_ptr<Base> ptr) {
+    void add(unique_ptr<IBase> ptr) {
         data.push_back(std::move(ptr));
+    }
+    template <typename T, typename... Args>
+    void emplace(Args&&... args) {
+        static_assert(std::is_base_of<IBase, T>::value, "T must derive from IBase");
+        data.push_back(std::make_unique<T>(std::forward<Args>(args)...));
     }
 
     class iterator {
 public:
-        iterator(vector<unique_ptr<Base>>* data, int idx, bool forward) : m_data(data), m_index(idx), m_forward(forward) { }
-        Base* operator->() { return (*m_data)[m_index].get(); }
-        Base& operator*() { return *((*m_data)[m_index].get()); }
+        iterator(vector<unique_ptr<IBase>>* data, int idx, bool forward) : m_data(data), m_index(idx), m_forward(forward) { }
+        IBase* operator->() { return (*m_data)[m_index].get(); }
+        IBase& operator*() { return *((*m_data)[m_index].get()); }
         iterator& operator++() { m_forward ? ++m_index : --m_index; return *this; } // this will support only prefix (++it)
         iterator operator++(int) { iterator temp = *this; ++(*this); return temp; }// this will support postfix (it++)
         bool operator!=(const iterator& other) { return m_index != other.m_index; }
 private:
-        vector<unique_ptr<Base>>* m_data = nullptr;
+        vector<unique_ptr<IBase>>* m_data = nullptr;
         int m_index = 0;
         bool m_forward = true;
     };
@@ -102,6 +101,7 @@ private:
     iterator rend() { return iterator(&data, -1, false); }
 };
 
+// ======== Main ========
 int main() {
     ActorContainer c;
     c.add(make_unique<Fireball>("🔥"));
@@ -109,6 +109,9 @@ int main() {
     c.add(make_unique<Robot>("🤖"));
     c.add(make_unique<Goblin>("👺"));
     
+    c.emplace<Robot>("🤖🤖🤖");
+    c.emplace<Fireball>("👺👺👺");
+
     cout << "\nPrinting forward START\n";
     for (const auto& actor : c) {
         std::cout << actor.name() << " performs action\n";
