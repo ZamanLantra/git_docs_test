@@ -23,14 +23,20 @@ public:
         m_data[m_size] = 0;
         cout << "Copy Constructor\n";
     }
-    String(String&& other) {                // Move Constructor
+    String(String&& other) noexcept {        // Move Constructor - explicit
         m_size = other.m_size;
         m_data = other.m_data;
         other.m_size = 0;
         other.m_data = nullptr;
-        cout << "Move Constructor\n";
+        cout << "Move Constructor - explicit\n";
     }
-    String& operator=(const String& other) { // Copy Assignment
+    String(char*&& d) noexcept {             // Move Constructor - implicit
+        m_size = strlen(d);
+        m_data = d;
+        d = nullptr;
+        cout << "Move Constructor - implicit\n";
+    }
+    String& operator=(const String& other) { // Copy Assignment operator
         m_size = other.m_size;
         m_data = new char[m_size+1];
         memcpy(m_data, other.m_data, m_size);
@@ -38,7 +44,7 @@ public:
         cout << "Copy Assignment\n";
         return *this;
     }
-    String& operator=(String&& other) {     // Move Assignment
+    String& operator=(String&& other) {     // Move Assignment operator
         if (this != &other) {
             m_size = other.m_size;
             m_data = other.m_data;
@@ -48,8 +54,17 @@ public:
         cout << "Move Assignment\n";
         return *this;
     }
+    String operator+(const String& other) const { // Concatenate operator
+        const int size = m_size + other.m_size;
+        char* c = new char[size + 1];
+        memcpy(c, m_data, m_size);
+        memcpy(c+m_size, other.m_data, other.m_size);
+        c[size] = 0;
+        cout << "Concatenate\n";
+        return String(std::move(c));
+    }
     ~String() {                             // Destructor
-        cout << "Destroyed\n";
+        cout << "Destroyed -- " << m_size << "bytes\n";
         delete[] m_data;
     }
     void print(const char* prefix) const {
@@ -64,30 +79,55 @@ private:
 int main() {
     std::cout << "Try programiz.pro\n\n";
     
-    String s1("Cherno");
+    String s1("Cherno");                    // Uses the constructor
     s1.print("s1->");
     
+    String s6("Hello");                     // Uses the constructor
+    String s7("World");                     // Uses the constructor
+    s6.print("s6->");
+    s7.print("s7->");
+    const String s6_const("Hello");         // Uses the constructor
+    const String s7_const("World");         // Uses the constructor     
+    s6_const.print("s6_const->");
+    s7_const.print("s7_const->");
+    
     cout << "\nStart Copy consructor s2\n";
-    String s2 = s1; // Copy consructor
+    String s2 = s1;                         // Uses the Copy consructor
     s2.print("s2->");
     
     cout << "\nStart Copy Assignemnt s3\n";
-    String s3("Hello"); 
-    s3 = s1;    // Copy assignment
+    String s3("Hello");                     // Uses the constructor
+    s3 = s1;                                // Uses the Copy assignment
     s3.print("s3->");
     
     cout << "\nStart Move consructor s4\n";
-    String s4 = std::move(s1);
+    String s4 = std::move(s1);              // Uses the Move Constructor - explicit
     s4.print("s4->");
     s1.print("s1->");
     
     cout << "\nStart Move Assignemnt s5\n";
-    String s5("Hello");
-    s5 = std::move(s4);
+    String s5("Hello");                     // Uses the constructor
+    s5 = std::move(s4);                     // Uses the Move Assignment
     s4.print("s4->");
     s5.print("s5->");
     
-    cout << "\n";
+    cout << "\nConcatenate s8\n";
+    String s8 = s6 + s7;                    // Uses the Concat operator and Move Constructor - implicit
+    s8.print("s8->");
     
+    cout << "\nConcatenate s9\n";
+    String s9(s6 + s7);                     // Uses the Concat operator and Move Constructor - implicit
+    s9.print("s9->");
+    
+    cout << "\nConcatenate s10\n";
+    String s10 = s6_const + s7_const;       // Uses the Concat operator and Move Constructor - implicit
+    s10.print("s10->");
+    
+    cout << "\nConcatenate s11\n";
+    String s11(s6_const + s7_const);        // Uses the Concat operator and Move Constructor - implicit
+    s11.print("s11->");
+    
+    cout << "\n";
+                                            // Uses a set of destructors for all String objects -- s1 and s4 would be empty
     return 0;
 }
