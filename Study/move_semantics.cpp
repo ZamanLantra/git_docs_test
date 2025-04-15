@@ -127,6 +127,11 @@ int main() {
     String s11(s6_const + s7_const);        // Uses the Concat operator and Move Constructor - implicit
     s11.print("s11->");
     
+    cout << "\nConcatenate s12\n";
+    String s12(String("Hi") + String("There")); // Uses the Concat operator and Move Constructor - implicit
+    s12.print("s12->");                         // But in this example, we get Hi and There strings constructed first
+                                                // As we have Concat, anyway we need to create a bigger string to have both, 
+                                                // but if not we could steal the resources of this (i.e. String("Hi")), and give to s12
     cout << "\n";
                                             // Uses a set of destructors for all String objects -- s1 and s4 would be empty
     return 0;
