@@ -65,14 +65,26 @@ public:
         cout << "Move Assignment\n";
         return *this;
     }
-    String operator+(const String& other) const { // Concatenate operator
+    String operator+(const String& other) const {   // Concatenate operator +
         const int size = m_size + other.m_size;
         char* c = new char[size + 1];
         memcpy(c, m_data, m_size);
         memcpy(c+m_size, other.m_data, other.m_size);
         c[size] = 0;
-        cout << "Concatenate\n";
+        cout << "Concatenate +\n";
         return String(std::move(c));
+    }
+    String& operator+=(const String& other) {       // Concatenate operator +=
+        const int size = m_size + other.m_size;
+        char* c = new char[size + 1];
+        memcpy(c, m_data, m_size);
+        memcpy(c+m_size, other.m_data, other.m_size);
+        c[size] = 0;
+        m_size = size;
+        delete[] m_data;
+        m_data = c;
+        cout << "Concatenate +=\n";
+        return *this;
     }
     ~String() {                             // Destructor
         cout << "Destroyed -- " << m_size << "bytes\n";
@@ -143,6 +155,11 @@ int main() {
     s12.print("s12->");                         // But in this example, we get Hi and There strings constructed first
                                                 // As we have Concat, anyway we need to create a bigger string to have both, 
                                                 // but if not we could steal the resources of this (i.e. String("Hi")), and give to s12
+    
+    cout << "\nConcatenate s13 -------\n";
+    s6 += s7;                               // Uses the Concat += operator
+    s6.print("s6->");
+    
     cout << "\n";
                                             // Uses a set of destructors for all String objects -- s1 and s4 would be empty
     return 0;
