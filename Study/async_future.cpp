@@ -27,13 +27,13 @@ public:
     }
 };
 
-int computeSquare(int x, int y) {
+int computeMultiple(int x, int y) {
     this_thread::sleep_for(chrono::seconds(1));
     return x * y;
 }
 
 int main() {
-    future<int> result = async(launch::async, computeSquare, 5, 10);
+    future<int> result = async(launch::async, computeMultiple, 5, 10);
 
     cout << "Doing other work in main...\n";
 
@@ -45,9 +45,9 @@ int main() {
 
     vector<shared_ptr<IResult>> results;
 
-    results.emplace_back(make_shared<TaskResult<int>>(async(launch::async, computeSquare, 15, 10)));
-    results.emplace_back(make_shared<TaskResult<int>>(async(launch::async, computeSquare, 15, 20)));
-    results.emplace_back(make_shared<TaskResult<int>>(async(launch::async, computeSquare, 15, 30)));
+    results.emplace_back(make_shared<TaskResult<int>>(async(launch::async, computeMultiple, 15, 10)));
+    results.emplace_back(make_shared<TaskResult<int>>(async(launch::async, computeMultiple, 15, 20)));
+    results.emplace_back(make_shared<TaskResult<int>>(async(launch::async, computeMultiple, 15, 30)));
 
     cout << "Doing other work in main...\n";
     this_thread::sleep_for(chrono::seconds(1));
