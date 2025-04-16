@@ -20,20 +20,21 @@ private:
     future<T> m_future;
 public:
     TaskResult(future<T>&& fut) : m_future(std::move(fut)) {}
-    ~IResult() override = default;
+    ~TaskResult() override = default;
     void fetch() override {
         T result = m_future.get();
         cout << "Emitted result is " << result << "\n";
     }
 };
 
-int computeMultiple(int x, int y) {
+template <typename T>
+T computeMultiple(T x, T y) {
     this_thread::sleep_for(chrono::seconds(1));
     return x * y;
 }
 
 int main() {
-    future<int> result = async(launch::async, computeMultiple, 5, 10);
+    future<int> result = async(launch::async, computeMultiple<int>, 5, 10);
 
     cout << "Doing other work in main...\n";
 
@@ -45,9 +46,9 @@ int main() {
 
     vector<shared_ptr<IResult>> results;
 
-    results.emplace_back(make_shared<TaskResult<int>>(async(launch::async, computeMultiple, 15, 10)));
-    results.emplace_back(make_shared<TaskResult<int>>(async(launch::async, computeMultiple, 15, 20)));
-    results.emplace_back(make_shared<TaskResult<int>>(async(launch::async, computeMultiple, 15, 30)));
+    results.emplace_back(make_shared<TaskResult<int>>(async(launch::async, computeMultiple<int>, 15, 10)));
+    results.emplace_back(make_shared<TaskResult<double>>(async(launch::async, computeMultiple<double>, 15.005, 20.995)));
+    results.emplace_back(make_shared<TaskResult<int>>(async(launch::async, computeMultiple<int>, 15, 30)));
 
     cout << "Doing other work in main...\n";
     this_thread::sleep_for(chrono::seconds(1));
