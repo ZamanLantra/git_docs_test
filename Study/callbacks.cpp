@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <iostream>
+#include <thread>
 
 using namespace std;
 
@@ -76,6 +77,24 @@ public:
     }
 };
 
+// =============== Using interfaces 3 - But with threads - fire and forget ===============
+class EventEmitter {
+private:
+    std::vector<std::shared_ptr<IBroadcast>> listeners;
+public:
+    EventEmitter() = default;
+    void RegisterLoggers(std::shared_ptr<IBroadcast> cb) {
+        listeners.emplace_back(std::move(cb));
+    }
+    void Broadcast(int code, const std::string& msg) {
+        for (auto& cb : listeners) {
+            std::thread([cb, code, msg]() {
+                cb->onEvent(code, msg);
+            }).detach();
+        }
+    }
+};
+
 // =============== Main ===============
 int main() {
     perform([](int x) {
@@ -93,4 +112,24 @@ int main() {
     events.RegisterLoggers(make_shared<Logger>("2"));
     events.RegisterLoggers(make_shared<Logger>("3"));
     events.Broadcast(1000, "This is where kingdoms are made");
+
+    EventEmitter emitter;
+    emitter.RegisterLoggers(make_shared<Logger>("Thread1"));
+    emitter.RegisterLoggers(make_shared<Logger>("Thread2"));
+    emitter.RegisterLoggers(make_shared<Logger>("Thread3"));
+    emitter.Broadcast(1001, "Come on");
+
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 }
+
+// Lambda got: 99
+// Inside Func1 got: 99
+// Inside Func2 got: 99
+// Worker did work
+// Boss signs
+// [Logger: 1] Event code: 1000, message: This is where kingdoms are made
+// [Logger: 2] Event code: 1000, message: This is where kingdoms are made
+// [Logger: 3] Event code: 1000, message: This is where kingdoms are made
+// [Logger: Thread1] Event code: 1001, message: Come on
+// [Logger: Thread2] Event code: 1001, message: Come on
+// [Logger: Thread3] Event code: 1001, message: Come on
