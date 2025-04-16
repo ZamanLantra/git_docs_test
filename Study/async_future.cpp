@@ -6,19 +6,57 @@
 #include <future>
 #include <chrono>
 
+using namespace std;
+
+class IResult {
+public: 
+    virtual ~IResult() = default;
+    virtual void fetch() = 0;
+};
+
+template <typename T>
+class TaskResult : public IResult {
+private:
+    future<T> m_future;
+public:
+    TaskResult(future<T>&& fut) : m_future(std::move(fut)) {}
+    ~IResult() override = default;
+    void fetch() override {
+        T result = m_future.get();
+        cout << "Emitted result is " << result << "\n";
+    }
+};
+
 int computeSquare(int x, int y) {
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    this_thread::sleep_for(chrono::seconds(1));
     return x * y;
 }
 
 int main() {
-    std::future<int> result = std::async(std::launch::async, computeSquare, 5, 10);
+    future<int> result = async(launch::async, computeSquare, 5, 10);
 
-    std::cout << "Doing other work in main...\n";
+    cout << "Doing other work in main...\n";
 
-    std::cout << "Waiting for the future...\n";
+    cout << "Waiting for the future...\n";
     int value = result.get(); 
-    std::cout << "Square is: " << value << std::endl;
+    cout << "Square is: " << value << endl;
+
+    this_thread::sleep_for(chrono::seconds(1));
+
+    vector<shared_ptr<IResult>> results;
+
+    results.emplace_back(make_shared<TaskResult<int>>(async(launch::async, computeSquare, 15, 10)));
+    results.emplace_back(make_shared<TaskResult<int>>(async(launch::async, computeSquare, 15, 20)));
+    results.emplace_back(make_shared<TaskResult<int>>(async(launch::async, computeSquare, 15, 30)));
+
+    cout << "Doing other work in main...\n";
+    this_thread::sleep_for(chrono::seconds(1));
+
+    for (auto& result : results) {
+        result->fetch();
+    }
+
+    this_thread::sleep_for(chrono::seconds(1));
 
     return 0;
 }
