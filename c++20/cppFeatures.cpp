@@ -42,6 +42,7 @@
 #include <chrono>
 #include <print>
 #include <stack>
+#include <generator>  // C++23 header
 
 constexpr int compute(int x) {
     if consteval {
@@ -51,6 +52,14 @@ constexpr int compute(int x) {
         // evaluated at runtime
         std::cout << "Runtime computation!\n";
         return x * x;
+    }
+}
+
+// A coroutine function that generates numbers from 1 to N
+std::generator<int> count_to23(int n) {
+    for (int i = 1; i <= n; ++i) {
+        std::cout << "yield " << i << std::endl;
+        co_yield i;  // 'co_yield' suspends execution and yields the value to the caller
     }
 }
 
@@ -95,5 +104,13 @@ int main()
     std::vector<int> vec{1, 2, 3};
     std::stack my_stack(vec);  // type deduced as std::stack<int, std::vector<int>>
 
+    // Call the coroutine and get the generator
+    auto numbers = count_to23(5); // Lazy evaluation
+    
+    // Iterate over the generated values
+    for (int value : numbers) {
+        std::cout << "Generated: " << value << std::endl;
+    }
+    
     return 0;
 }
