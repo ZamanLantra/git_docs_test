@@ -29,6 +29,7 @@
     Calendar and time-zone library
 
 🚀 C++23
+    built-in coroutine generator
     std::print and std::format improvements (modern I/O)
     Deduction guides for std::stack, std::queue, etc.
     if consteval (differentiate between compile-time and runtime)
@@ -60,6 +61,13 @@ std::generator<int> count_to23(int n) {
     for (int i = 1; i <= n; ++i) {
         std::cout << "yield " << i << std::endl;
         co_yield i;  // 'co_yield' suspends execution and yields the value to the caller
+    }
+}
+std::generator<int> gen_rand() {
+    while (true) {
+        int x = std::rand() % 100;
+        std::cout << "yield " << x << std::endl;
+        co_yield x;  // 'co_yield' suspends execution and yields the value to the caller
     }
 }
 
@@ -105,12 +113,16 @@ int main()
     std::stack my_stack(vec);  // type deduced as std::stack<int, std::vector<int>>
 
     // Call the coroutine and get the generator
-    auto numbers = count_to23(5); // Lazy evaluation
-    
-    // Iterate over the generated values
-    for (int value : numbers) {
+    auto numbers = count_to23(5); // Lazy evaluation  
+    for (int value : numbers) { // Iterate over the generated values
         std::cout << "Generated: " << value << std::endl;
     }
-    
+
+    auto rnd = gen_rand();
+    auto it = rnd.begin();   
+    for (int i = 0; i < 15; ++i) {
+        std::cout << *(it) << std:: endl;
+        ++it;
+    }
     return 0;
 }
