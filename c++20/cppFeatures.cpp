@@ -2,35 +2,36 @@
 
 /*
 🚀 C++11
-auto type deduction:
-Range-based for loops:
-Lambda expressions:
-Move semantics (std::move)
-Smart pointers (std::unique_ptr, std::shared_ptr)
-constexpr
+    auto type deduction:
+    Range-based for loops:
+    Lambda expressions:
+    Move semantics (std::move)
+    Smart pointers (std::unique_ptr, std::shared_ptr)
+    constexpr
 
 🚀 C++14
-Generic lambdas: with auto
-std::make_unique
-Return type deduction
+    Generic lambdas: with auto
+    std::make_unique
+    Return type deduction
 
 🚀 C++17
-if constexpr for compile-time branching:
-Structured bindings:
-std::string_view (non-owning strings)
-std::optional, std::variant, std::any
+    if constexpr for compile-time branching:
+    Structured bindings:
+    std::string_view (non-owning strings)
+    std::optional, std::variant, std::any
+
 🚀 C++20
-Concepts:
-Ranges library:
-consteval
-std::span (non-owning array views)
-[[likely]], [[unlikely]] attributes
-Calendar and time-zone library
+    Concepts:
+    Ranges library:
+    consteval
+    std::span (non-owning array views)
+    [[likely]], [[unlikely]] attributes
+    Calendar and time-zone library
 
 🚀 C++23
-std::print and std::format improvements (modern I/O)
-Deduction guides for std::stack, std::queue, etc.
-if consteval (differentiate between compile-time and runtime)
+    std::print and std::format improvements (modern I/O)
+    Deduction guides for std::stack, std::queue, etc.
+    if consteval (differentiate between compile-time and runtime)
 */
 
 #include <iostream>
