@@ -33,6 +33,11 @@ T computeMultiple(T x, T y) {
     return x * y;
 }
 
+void produce_value(std::promise<int> prom) {
+    std::this_thread::sleep_for(std::chrono::seconds(2)); // simulate work
+    prom.set_value(42); // send value to future
+}
+
 int main() {
     future<int> result = async(launch::async, computeMultiple<int>, 5, 10);
 
@@ -59,5 +64,15 @@ int main() {
 
     this_thread::sleep_for(chrono::seconds(1));
 
+    promise<int> prom;
+    future<int> fut = prom.get_future();
+
+    thread producer(produce_value, std::move(prom));
+
+    cout << "Waiting for promissed value...\n";
+    int valueX = fut.get(); // blocks until promise sets value
+    cout << "Received: " << valueX << "\n";
+
+    producer.join();
     return 0;
 }
