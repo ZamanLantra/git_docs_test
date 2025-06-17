@@ -49,8 +49,11 @@ using namespace std;
 
 constexpr size_t POOL_SIZE = 10'000'000; 
 constexpr int NUM_ORDERS = 1'000'000;
+constexpr int MAX_PRICE_LEVELS = 100'000;
+constexpr double TICK_SIZE = 0.01;
+constexpr int TICKS_PER_UNIT = 1 / TICK_SIZE;
 
-struct alignas(64) Order { 
+struct alignas(64) Order {  //  
     uint64_t order_id;
     double price;
     int quantity;
@@ -59,7 +62,12 @@ struct alignas(64) Order {
 
 class OrderBook {
 public:
-    OrderBook() : order_count(0), order_pool(POOL_SIZE){
+    OrderBook() : 
+            order_count(0), 
+            order_pool(POOL_SIZE), 
+            best_bid_index(-1), 
+            best_ask_index(MAX_PRICE_LEVELS) {
+        
         order_memory.reserve(POOL_SIZE); // reserve space for 1 million orders
         for (auto& order : order_pool) {
             order_memory.emplace_back(&order);
@@ -70,10 +78,13 @@ public:
             throw runtime_error("Order pool is full");
         }
         ++order_count;
+        int idx = price_to_index(order.price);
         if (order.is_buy) {
-            bid_book[order.price] += order.quantity;
+            bid_levels[idx] += order.quantity;
+            if (idx > best_bid_index) best_bid_index = idx;
         } else {
-            ask_book[order.price] += order.quantity;
+            ask_levels[idx] += order.quantity;
+            if (idx < best_ask_index) best_ask_index = idx;
         }
         Order* mem = order_memory.back();
         order_memory.pop_back();
@@ -85,6 +96,7 @@ public:
 
         order_map[order.order_id] = mem;
     }
+    
     void update(uint64_t order_id, int new_quantity) {
         if (!order_map.contains(order_id)) {
             throw std::runtime_error("Order not found");
@@ -92,52 +104,91 @@ public:
         Order* ord = order_map[order_id];
 
         if (ord->is_buy) {
-            bid_book[ord->price] += (new_quantity - ord->quantity);
+            update_price_level<true>(ord->price, (new_quantity - ord->quantity));
         } else {
-            ask_book[ord->price] += (new_quantity - ord->quantity);
+            update_price_level<false>(ord->price, (new_quantity - ord->quantity));
         }
         ord->quantity = new_quantity;
     }
+    
     void cancel(uint64_t order_id) {
         if (!order_map.contains(order_id)) {
             throw std::runtime_error("Order not found");
         }
         Order* ord = order_map[order_id];
         if (ord->is_buy) {
-            bid_book[ord->price] -= ord->quantity;
+            update_price_level<true>(ord->price, -ord->quantity);
         } else {
-            ask_book[ord->price] -= ord->quantity;
+            update_price_level<false>(ord->price, -ord->quantity);
         }
+
         order_memory.emplace_back(order_map[order_id]);
         --order_count;
         order_map.erase(order_id); 
     }
+    
     std::pair<double, int> best_bid() const {
-        if (bid_book.empty()) {
-            return {0, 0};
-        }
-        return *bid_book.begin();
+        double best_bid_price = index_to_price(best_bid_index);
+        return {best_bid_price, bid_levels[best_bid_index]};
     }
     std::pair<double, int> best_ask() const {
-        if (ask_book.empty()) {
-            return {0, 0};
-        }
-        return *ask_book.begin();
+        double best_ask_price = index_to_price(best_ask_index);
+        return {best_ask_price, ask_levels[best_ask_index]};
     }
+
 private:
+    inline int price_to_index(double price) const {
+        return static_cast<int>(price * TICKS_PER_UNIT);
+    }
+    inline double index_to_price(int index) const {
+        return index * TICK_SIZE;
+    }
+
+    template <bool IS_BUY>
+    void update_price_level(double price, int update_quantity) {
+        int idx = price_to_index(price);
+        if constexpr (IS_BUY) {
+            bid_levels[idx] += update_quantity;
+            if (idx == best_bid_index && bid_levels[idx] == 0) {
+                for (int i = idx - 1; i >= 0; --i) {
+                    if (bid_levels[i] > 0) {
+                        best_bid_index = i;
+                        return;
+                    }
+                }      
+            }
+            best_bid_index = 0;
+        } else {
+            ask_levels[idx] += update_quantity;
+            if (idx == best_ask_index && ask_levels[idx] == 0) {
+                for (int i = idx + 1; i < MAX_PRICE_LEVELS; ++i) {
+                    if (ask_levels[i] > 0) {
+                        best_ask_index = i;
+                        return;
+                    }
+                }
+            }
+            best_ask_index = MAX_PRICE_LEVELS - 1;
+        }
+    }
+
     vector<Order> order_pool;
     vector<Order*> order_memory; // pointers to active orders
     size_t order_count = 0; // current number of orders
     unordered_map<uint64_t, Order*> order_map; // order_id -> pointer to Order
-    map<double, int, std::greater<double>> bid_book; // price -> quantity for bids
-    map<double, int> ask_book; // price -> quantity for asks
+    std::array<int, MAX_PRICE_LEVELS> bid_levels{};
+    std::array<int, MAX_PRICE_LEVELS> ask_levels{};
+    int best_bid_index;
+    int best_ask_index;
 };
 
 /*
+$ numactl --physcpubind=4 ./MockOrderBook
+
 🚀 Benchmarking OrderBook with 1000000 orders
-🟢 Insert Time: 528 ms → 1.89394e+06 ops/sec
-🟡 Update Time: 464 ms → 2.15517e+06 ops/sec
-🔴 Cancel Time: 464 ms → 2.15517e+06 ops/sec
+🟢 Insert Time: 49 ms → 2.04082e+07 ops/sec
+🟡 Update Time: 24 ms → 4.16667e+07 ops/sec
+🔴 Cancel Time: 35 ms → 2.85714e+07 ops/sec
 ✅ Top-of-book empty after all cancels.
 */
 void benchmark_orderbook() {
@@ -203,6 +254,8 @@ void benchmark_orderbook() {
     // Final check: best bid/ask should be (0, 0)
     auto best_bid = book.best_bid();
     auto best_ask = book.best_ask();
+    cout << "Best Bid: " << best_bid.first << " Size: " << best_bid.second << "\n";
+    cout << "Best Ask: " << best_ask.first << " Size: " << best_ask.second << "\n";
     assert(best_bid.second == 0 && best_ask.second == 0);
 
     std::cout << "✅ Top-of-book empty after all cancels.\n";
