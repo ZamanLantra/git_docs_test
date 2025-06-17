@@ -19,6 +19,10 @@ concept MyQ = requires(Q q, typename Q::value_type ptr) {
     { q.dequeue() } -> std::convertible_to<typename Q::value_type>;
 };
 
+/**************************************************************************
+Supported Q types include LockedQueue, CustomSPMCLockFreeQueue, BoostLockFreeQueue
+and MoodycamelLockFreeQueue. Check TestQueue.cpp for usage examples.
+**************************************************************************/
 template <MyQ Q>
 class Queue {
 public:
@@ -31,7 +35,7 @@ private:
 
 /**************************************************************************/
 template<MsgPtr T>
-class LockedQueue {   // Using mutex and condition variable
+class LockedQueue {
 public:
     using value_type = T;
     LockedQueue(size_t capacity) {
