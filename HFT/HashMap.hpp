@@ -7,26 +7,59 @@
 #include <string>
 #include <iostream>
 
-using namespace std;
+namespace Const {
+#ifndef HASH_BUCKETS
+    constexpr size_t initBuckets = 1 << 8; // 256 - Default bucket count
+#else
+    constexpr size_t initBuckets = HASH_BUCKETS; // Use user-defined bucket count
+#endif
+};
 
-template <typename Key, typename Value>
-class ChainingHashTable {
-private:
-    struct Node {
-        Key key;
-        Value value;
-        Node(const Key& k, const Value& v) : key(k), value(v) {}
-        bool operator==(const Node& other) {
-            return key == other.key;
-        }
-    };
-    vector<list<Node>> table_;
+template <typename HM>
+concept MyHM = requires(HM hm, typename HM::key_type key, typename HM::value_type val) {
+    { hm.insert(key, val) } -> std::same_as<void>;
+    { hm.contains(key) } -> std::same_as<bool>;
+    { hm.remove(key) } -> std::same_as<bool>;
+    { hm.find(key) } -> std::same_as<typename HM::value_type*>;
+};
+
+/**************************************************************************
+Supported HM types include ChainingHashMap, FixedSizedChainingHashMap and 
+OpenAddressingHashMap. Check TestHashMap.cpp for usage examples.
+**************************************************************************/
+template <MyHM HM>
+class HashMap {
 public:
-    ChainingHashTable(size_t size = 16) : table_(size) {
-        cout << "ChainingHashTable initialized " << endl;
+    HashMap() { }
+	HashMap(HashMap const&) = delete;
+	HashMap& operator=(HashMap const&) = delete;
+    HashMap(HashMap&&) = default;
+    HashMap& operator=(HashMap&&) = default;
+    void insert(const typename HM::key_type& key, const typename HM::value_type& value) { 
+        hashmap_.insert(key, value); }
+    bool contains(const typename HM::key_type& key) const { return hashmap_.contains(key); }
+    bool remove(const typename HM::key_type& key) { return hashmap_.remove(key); }
+    HM::value_type* find(const typename HM::key_type& key) { return hashmap_.find(key); }
+private:
+    HM hashmap_;
+};
+
+/**************************************************************************/
+template <typename Key, typename Value>
+class ChainingHashMap {
+public:
+    using key_type = Key;
+    using value_type = Value;
+    ChainingHashMap() 
+            : table_(Const::initBuckets)
+            , mask_(Const::initBuckets - 1) {
+        std::cout << "ChainingHashMap initialized " << std::endl;
+        if (Const::initBuckets == 0 || (Const::initBuckets & (Const::initBuckets - 1)) != 0) {
+            throw std::runtime_error("initBuckets must be non-zero and a power of 2");
+        }     
     }
     void insert(const Key& key, const Value& value) {
-        size_t index = std::hash<Key>()(key) % table_.size();
+        size_t index = std::hash<Key>()(key) & mask_;
         for (auto& node : table_[index]) {
             if (node.key == key) {
                 node.value = value;
@@ -36,7 +69,7 @@ public:
         table_[index].emplace_back(key, value);
     }
     bool contains(const Key& key) const {
-        size_t index = std::hash<Key>()(key) % table_.size();
+        size_t index = std::hash<Key>()(key) & mask_;
         for (const auto& node : table_[index]) {
             if (node.key == key) {
                 return true;
@@ -45,7 +78,7 @@ public:
         return false;
     }
     bool remove(const Key& key) {
-        size_t index = std::hash<Key>()(key) % table_.size();
+        size_t index = std::hash<Key>()(key) & mask_;
         for (auto& node : table_[index]) {
             if (node.key == key) {
                 table_[index].remove(node);
@@ -55,7 +88,7 @@ public:
         return false;
     }
     Value* find(const Key& key) {
-        size_t index = std::hash<Key>()(key) % table_.size();
+        size_t index = std::hash<Key>()(key) & mask_;
         for (auto& node : table_[index]) {
             if (node.key == key) {
                 return &node.value;
@@ -63,43 +96,50 @@ public:
         }
         return nullptr;
     }
-};
-
-template <typename Key, typename Value>
-class FixedSizedChainingHashTable {
 private:
     struct Node {
         Key key;
         Value value;
-        Node* next;
-        Node() : key(), value(), next(nullptr) {}
-        Node(const Key& k, const Value& v) : key(k), value(v), next(nullptr) {}
+        Node(const Key& k, const Value& v) : key(k), value(v) {}
+        bool operator==(const Node& other) {
+            return key == other.key;
+        }
     };
-    vector<Node*> table_;
-    array<Node, 1024> nodes_pool_;
-    stack<Node*> free_nodes_;
+    std::vector<std::list<Node>> table_;
+    size_t mask_ = 0;
+};
+
+/**************************************************************************/
+template <typename Key, typename Value>
+class FixedSizedChainingHashMap {
 public:
-    FixedSizedChainingHashTable(size_t size = 2) : table_(size, nullptr) {
-        cout << "FixedSizedChainingHashTable initialized " << endl;
+    using key_type = Key;
+    using value_type = Value;
+    FixedSizedChainingHashMap() 
+            : buckets_(Const::initBuckets, nullptr) 
+            , nodes_pool_(Const::initBuckets * 16)
+            , mask_(Const::initBuckets - 1) {
+        std::cout << "FixedSizedChainingHashMap initialized " << std::endl;
+        if (Const::initBuckets == 0 || (Const::initBuckets & (Const::initBuckets - 1)) != 0) {
+            throw std::runtime_error("initBuckets must be non-zero and a power of 2");
+        }
         for (size_t i = 0; i < nodes_pool_.size(); ++i) {
             free_nodes_.push(&nodes_pool_[i]);
         }
     }
 
     void insert(const Key& key, const Value& value) {
-        size_t index = std::hash<Key>()(key) % table_.size();
+        size_t index = std::hash<Key>()(key) & mask_;
         if (free_nodes_.empty()) {
             throw std::runtime_error("No free nodes available in the pool");
         }
-
         Node* current = free_nodes_.top(); free_nodes_.pop();
         current->key = key;
         current->value = value;
         current->next = nullptr;
-        
-        Node* node = table_[index];
+        Node* node = buckets_[index];
         if (node == nullptr) {
-            table_[index] = current;
+            buckets_[index] = current;
             return;
         }
         while (node->next != nullptr) {
@@ -108,8 +148,8 @@ public:
         node->next = current;
     }
     bool contains(const Key& key) const {
-        size_t index = std::hash<Key>()(key) % table_.size();
-        Node* node = table_[index];
+        size_t index = std::hash<Key>()(key) & mask_;
+        Node* node = buckets_[index];
         while (node != nullptr) {
             if (node->key == key) {
                 return true;
@@ -119,13 +159,13 @@ public:
         return false;
     }
     bool remove(const Key& key) {
-        size_t index = std::hash<Key>()(key) % table_.size();
-        Node* node = table_[index];
+        size_t index = std::hash<Key>()(key) & mask_;
+        Node* node = buckets_[index];
         Node* prev = nullptr;
         while (node != nullptr) {
             if (node->key == key) {
                 if (prev == nullptr) {
-                    table_[index] = node->next; // Remove head
+                    buckets_[index] = node->next; // Remove head
                 } else {
                     prev->next = node->next; // Remove from middle or end
                 }
@@ -139,8 +179,8 @@ public:
         return false;
     }
     Value* find(const Key& key) {
-        size_t index = std::hash<Key>()(key) % table_.size();
-        Node* node = table_[index];
+        size_t index = std::hash<Key>()(key) & mask_;
+        Node* node = buckets_[index];
         while (node != nullptr) {
             if (node->key == key) {
                 return &node->value;
@@ -149,47 +189,37 @@ public:
         }
         return nullptr;
     }
+private:
+    struct Node {
+        Key key;
+        Value value;
+        Node* next;
+        Node() : key(), value(), next(nullptr) {}
+        Node(const Key& k, const Value& v) : key(k), value(v), next(nullptr) {}
+    };
+    std::vector<Node*> buckets_;
+    std::vector<Node> nodes_pool_;
+    std::stack<Node*> free_nodes_;
+    size_t mask_ = 0;
 };
 
+/**************************************************************************/
 template <typename Key, typename Value>
-class OpenAddressingHashTable {
-private:
-    enum class Status { EMPTY, OCCUPIED, DELETED };
-    struct Node {
-        Key key_;
-        Value value_;
-        Status status = Status::EMPTY;
-    };
-    vector<Node> table_;
-    size_t size_ = 0;
-    float maxLoadFactor_ = 0.7f;
-
-    size_t getHash(const Key& key) const {
-        return std::hash<Key>()(key) % table_.size();
-    }
-
-    void reHash() {
-        vector<Node> oldTable_ = std::move(table_);
-        size_t newSize = oldTable_.size() * 2;
-        table_ = vector<Node>(newSize);
-        size_ = 0;
-        for (const auto& node : oldTable_) {
-            if (node.status == Status::OCCUPIED) {
-                insert(node.key_, node.value_);
-            }
-        }
-    }
+class OpenAddressingHashMap {
 public:
-    OpenAddressingHashTable(size_t size = 16) : table_(size){
-        cout << "OpenAddressingHashTable initialized " << endl;
+    using key_type = Key;
+    using value_type = Value;
+    OpenAddressingHashMap() 
+            : table_(Const::initBuckets)
+            , mask_(Const::initBuckets - 1) {
+        std::cout << "OpenAddressingHashMap initialized " << std::endl;
     }
-
     void insert(const Key& key, const Value& value) {
-        if (size_+1 > table_.size() * maxLoadFactor_) {
+        if ((size_ + 1) > table_.size() * maxLoadFactor_) {
             reHash();
         }
         size_t index = getHash(key);
-        size_t originalIndex = index;
+        const size_t originalIndex = index;
         while (table_[index].status == Status::OCCUPIED) {
             if (table_[index].key_ == key) {
                 table_[index].value_ = value;
@@ -203,10 +233,9 @@ public:
         table_[index].status = Status::OCCUPIED;
         ++size_;
     }
-
     bool contains(const Key& key) const {
         size_t index = getHash(key);
-        size_t originalIndex = index;
+        const size_t originalIndex = index;
 
         while (table_[index].status != Status::EMPTY) {
             if (table_[index].status == Status::OCCUPIED && table_[index].key_ == key) {
@@ -221,7 +250,7 @@ public:
     }
     bool remove(const Key& key) {
         size_t index = getHash(key);
-        size_t originalIndex = index;
+        const size_t originalIndex = index;
 
         while (table_[index].status != Status::EMPTY) {
             if (table_[index].status == Status::OCCUPIED && table_[index].key_ == key) {
@@ -239,7 +268,7 @@ public:
     }
     Value* find(const Key& key) {
         size_t index = getHash(key);
-        size_t originalIndex = index;
+        const size_t originalIndex = index;
 
         while (table_[index].status != Status::EMPTY) {
             if (table_[index].status == Status::OCCUPIED && table_[index].key_ == key) {
@@ -252,43 +281,33 @@ public:
         }
         return nullptr;
     }
+private:
+    enum class Status { EMPTY, OCCUPIED, DELETED };
+    struct Node {
+        Key key_;
+        Value value_;
+        Status status = Status::EMPTY;
+    };
+    std::vector<Node> table_;
+    size_t size_ = 0;
+    size_t mask_ = 0;
+    float maxLoadFactor_ = 0.7f;
+
+    size_t getHash(const Key& key) const {
+        return std::hash<Key>()(key) % table_.size();
+    }
+    void reHash() {
+        std::vector<Node> oldTable_ = std::move(table_);
+        size_t newSize = oldTable_.size() * 2;
+        mask_ = newSize - 1;
+        table_ = std::vector<Node>(newSize);
+        size_ = 0;
+        for (const auto& node : oldTable_) {
+            if (node.status == Status::OCCUPIED) {
+                insert(node.key_, node.value_);
+            }
+        }
+    }
 };
 
-int main() {
-    // using HashTable = ChainingHashTable<int, string>;
-    // using HashTable = FixedSizedChainingHashTable<int, string>;
-    using HashTable = OpenAddressingHashTable<int, string>;
-
-    HashTable hash_table;
-
-    hash_table.insert(1, "one");
-    hash_table.insert(2, "two");
-    hash_table.insert(3, "three");
-
-    if (hash_table.contains(2)) {
-        cout << "Key 2 exists in the hash table." << endl;
-    } else {
-        cout << "Key 2 does not exist in the hash table." << endl;
-    }
-
-    hash_table.remove(2);
-    
-    if (!hash_table.contains(2)) {
-        cout << "Key 2 has been removed from the hash table." << endl;
-    }
-
-    string* value3 = hash_table.find(3);
-    if (value3) {
-        cout << "Found key 3 with value: " << *value3 << endl;
-    } else {
-        cout << "Key 3 not found in the hash table." << endl;
-    }
-    string* value4 = hash_table.find(4);
-    if (value4) {
-        cout << "Found key 4 with value: " << *value4 << endl;
-    } else {
-        cout << "Key 4 not found in the hash table." << endl;
-    }
-
-    return 0;
-}
+/**************************************************************************/
