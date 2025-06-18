@@ -1,19 +1,18 @@
-#include "LockLessQueue.hpp"
+// g++ -std=c++20 TestQueue.cpp -o TestQueue -O3 -DQUEUE_CAPACITY=2048
+
+#include "Queue.hpp"
 
 template <typename Q>
 void testQueue(const std::string& queueType) {
     std::cout << "Testing with " << queueType << "...\n";
     
-    Queue<Q> queue(128);
-  
+    Queue<Q> queue;
     double* msg1 = new double(5.0);
-    double* msg2 = new double(6.0);  
+    double* msg2 = new double(6.0);
     queue.enqueue(msg1);
     queue.enqueue(msg2);
-  
     double* received1 = queue.dequeue();
     double* received2 = queue.dequeue();
-    
     if (received1) {
         std::cout << "Received: " << *received1 << std::endl;      
     } else {
@@ -27,7 +26,8 @@ void testQueue(const std::string& queueType) {
     delete received1, received2;
 }
 
-int main() { 
+int main() {
+    
     testQueue<LockedQueue<double*>>("LockedQueue");
     testQueue<CustomSPMCLockFreeQueue<double*>>("CustomSPMCLockFreeQueue");
     testQueue<BoostLockFreeQueue<double*>>("BoostLockFreeQueue");
