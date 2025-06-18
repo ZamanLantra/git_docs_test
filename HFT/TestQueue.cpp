@@ -29,7 +29,8 @@ void testQueue(const std::string& queueType) {
 int main() {
     
     testQueue<LockedQueue<double*>>("LockedQueue");
-    testQueue<CustomSPMCLockFreeQueue<double*>>("CustomSPMCLockFreeQueue");
+    testQueue<CustomSPSCLockFreeQueue<double*>>("CustomSPSCLockFreeQueue");
+    testQueue<CustomMPMCLockFreeQueue<double*>>("CustomMPMCLockFreeQueue");
     testQueue<BoostLockFreeQueue<double*>>("BoostLockFreeQueue");
     testQueue<MoodycamelLockFreeQueue<double*>>("MoodycamelLockFreeQueue");
 }

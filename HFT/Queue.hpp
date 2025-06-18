@@ -28,8 +28,8 @@ concept MyQ = requires(Q q, typename Q::value_type ptr) {
 };
 
 /**************************************************************************
-Supported Q types include LockedQueue, CustomSPMCLockFreeQueue, BoostLockFreeQueue
-and MoodycamelLockFreeQueue. Check TestQueue.cpp for usage examples.
+Supported Q types include LockedQueue, CustomSPSCLockFreeQueue, BoostLockFreeQueue,
+CustomMPMCLockFreeQueue and MoodycamelLockFreeQueue. Check TestQueue.cpp for usage examples.
 **************************************************************************/
 template <MyQ Q>
 class Queue {
@@ -74,17 +74,17 @@ private:
 
 /**************************************************************************/
 template <MsgPtr T>
-class CustomSPMCLockFreeQueue {
+class CustomSPSCLockFreeQueue {
 public:
     using value_type = T;
-    CustomSPMCLockFreeQueue() 
+    CustomSPSCLockFreeQueue() 
             : buffer_(Const::queueCapacity)
             , capacity_(Const::queueCapacity)
             , mask_(Const::queueCapacity - 1) {
         if (capacity_ == 0 || (capacity_ & mask_) != 0) {
             throw std::invalid_argument("Capacity must be a power of two and greater than zero.");
         }
-        std::cout << "Using CustomSPMCLockFreeQueue " << Const::queueCapacity << " capacity...\n";
+        std::cout << "Using CustomSPSCLockFreeQueue " << Const::queueCapacity << " capacity...\n";
     }
     inline bool enqueue(T ptr) {
         const size_t tail = tail_.load(std::memory_order_relaxed);
@@ -105,6 +105,79 @@ public:
     }
 private:
     std::vector<T> buffer_;
+    alignas(64) std::atomic<size_t> head_{ 0 };
+    alignas(64) std::atomic<size_t> tail_{ 0 };
+    size_t capacity_{ 0 };
+    size_t mask_{ 0 };
+};
+
+/**************************************************************************/
+template <MsgPtr T>
+class CustomMPMCLockFreeQueue {
+public:
+    using value_type = T;
+    CustomMPMCLockFreeQueue() 
+            : buffer_(Const::queueCapacity)
+            , capacity_(Const::queueCapacity)
+            , mask_(Const::queueCapacity - 1) {
+        if (capacity_ == 0 || (capacity_ & mask_) != 0) {
+            throw std::invalid_argument("Capacity must be a power of two and greater than zero.");
+        }
+        std::cout << "Using CustomMPMCLockFreeQueue " << Const::queueCapacity << " capacity...\n";
+        for (size_t i = 0; i < capacity_; ++i) {
+            buffer_[i].seq.store(i, std::memory_order_relaxed);
+        }
+        head_.store(0, std::memory_order_relaxed);
+        tail_.store(0, std::memory_order_relaxed);
+    }
+    inline bool enqueue(T ptr) {
+        Cell* cell;
+        size_t pos = tail_.load(std::memory_order_relaxed);
+        while (true) {
+            cell = &buffer_[pos & mask_];
+            size_t seq = cell->seq.load(std::memory_order_acquire);
+            int64_t diff = static_cast<int64_t>(seq) - static_cast<int64_t>(pos);
+            if (diff == 0) {
+                if (tail_.compare_exchange_weak(pos, pos + 1, std::memory_order_relaxed)) {
+                    break;
+                }
+            } else if (diff < 0) {
+                return false;
+            } else {
+                pos = tail_.load(std::memory_order_relaxed);
+            }
+        }
+        cell->data = ptr;
+        cell->seq.store(pos + 1, std::memory_order_release);
+        return true;
+    }
+    inline T dequeue() {
+        Cell* cell;
+        size_t pos = head_.load(std::memory_order_relaxed);
+        while (true) {
+            cell = &buffer_[pos & mask_];
+            size_t seq = cell->seq.load(std::memory_order_acquire);
+            int64_t diff = static_cast<int64_t>(seq) - static_cast<int64_t>(pos + 1);
+            if (diff == 0) {
+                if (head_.compare_exchange_weak(pos, pos + 1, std::memory_order_relaxed)) {
+                    break;
+                }
+            } else if (diff < 0) {
+                return nullptr;
+            } else {
+                pos = head_.load(std::memory_order_relaxed);
+            }
+        }
+        T value = cell->data;
+        cell->seq.store(pos + capacity_, std::memory_order_release);
+        return value;
+    }
+private:
+    struct Cell {
+        std::atomic<size_t> seq;
+        T data;
+    };
+    std::vector<Cell> buffer_;
     alignas(64) std::atomic<size_t> head_{ 0 };
     alignas(64) std::atomic<size_t> tail_{ 0 };
     size_t capacity_{ 0 };
