@@ -225,7 +225,7 @@ public:
                 table_[index].value_ = value;
                 return;
             }
-            index = (index + 1) % table_.size();
+            index = (index + 1) & mask_;
         }
 
         table_[index].key_ = key;
@@ -241,7 +241,7 @@ public:
             if (table_[index].status == Status::OCCUPIED && table_[index].key_ == key) {
                 return true;
             }
-            index = (index + 1) % table_.size();
+            index = (index + 1) & mask_;
             if (index == originalIndex) {
                 break;
             }
@@ -258,7 +258,7 @@ public:
                 --size_;
                 return true;
             }
-            index = (index + 1) % table_.size();
+            index = (index + 1) & mask_;
             if (index == originalIndex) {
                 break;
             }
@@ -274,7 +274,7 @@ public:
             if (table_[index].status == Status::OCCUPIED && table_[index].key_ == key) {
                 return &table_[index].value_;
             }
-            index = (index + 1) % table_.size();
+            index = (index + 1) & mask_;
             if (index == originalIndex) {
                 break;
             }
@@ -294,7 +294,7 @@ private:
     float maxLoadFactor_ = 0.7f;
 
     size_t getHash(const Key& key) const {
-        return std::hash<Key>()(key) % table_.size();
+        return std::hash<Key>()(key) & mask_;
     }
     void reHash() {
         std::vector<Node> oldTable_ = std::move(table_);
