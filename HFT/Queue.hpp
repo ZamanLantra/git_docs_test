@@ -10,6 +10,14 @@
 #include <boost/lockfree/queue.hpp>
 #include "moodycamel/concurrentqueue.h"
 
+namespace Const {
+#ifndef QUEUE_CAPACITY
+    constexpr size_t queueCapacity = 1 << 10; // 1024 - Default queue capacity
+#else
+    constexpr size_t queueCapacity = QUEUE_CAPACITY; // Use user-defined capacity
+#endif
+};
+
 template <typename T>
 concept MsgPtr = std::is_pointer_v<T>;
 
@@ -26,7 +34,11 @@ and MoodycamelLockFreeQueue. Check TestQueue.cpp for usage examples.
 template <MyQ Q>
 class Queue {
 public:
-    Queue(size_t capacity) : queue_(capacity) { }
+    Queue() { }
+	Queue(Queue const&) = delete;
+	Queue& operator=(Queue const&) = delete;
+    Queue(Queue&&) = default;
+    Queue& operator=(Queue&&) = default;
     bool enqueue(Q::value_type ptr) { return queue_.enqueue(ptr); }
     Q::value_type dequeue() { return queue_.dequeue(); }
 private:
@@ -38,7 +50,7 @@ template<MsgPtr T>
 class LockedQueue {
 public:
     using value_type = T;
-    LockedQueue(size_t capacity) {
+    LockedQueue() {
         std::cout << "Using LockedQueue\n";
     }
     inline bool enqueue(T ptr) {
@@ -65,14 +77,14 @@ template <MsgPtr T>
 class CustomSPMCLockFreeQueue {
 public:
     using value_type = T;
-    CustomSPMCLockFreeQueue(size_t capacity) 
-            : buffer_(capacity)
-            , capacity_(capacity)
-            , mask_(capacity - 1) {
+    CustomSPMCLockFreeQueue() 
+            : buffer_(Const::queueCapacity)
+            , capacity_(Const::queueCapacity)
+            , mask_(Const::queueCapacity - 1) {
         if (capacity_ == 0 || (capacity_ & mask_) != 0) {
             throw std::invalid_argument("Capacity must be a power of two and greater than zero.");
         }
-        std::cout << "Using CustomSPMCLockFreeQueue\n";
+        std::cout << "Using CustomSPMCLockFreeQueue " << Const::queueCapacity << " capacity...\n";
     }
     inline bool enqueue(T ptr) {
         const size_t tail = tail_.load(std::memory_order_relaxed);
@@ -104,8 +116,8 @@ template <MsgPtr T>
 class BoostLockFreeQueue {
 public:
     using value_type = T;
-    BoostLockFreeQueue(size_t capacity) : queue_(capacity) {
-        std::cout << "Using BoostLockFreeQueue\n";
+    BoostLockFreeQueue() {
+        std::cout << "Using BoostLockFreeQueue " << Const::queueCapacity << " capacity...\n";
     }
     inline bool enqueue(T ptr) {
         return queue_.push(ptr);
@@ -116,7 +128,9 @@ public:
         return msg;
     }
 private:
-    boost::lockfree::queue<T, boost::lockfree::fixed_sized<true>> queue_;
+    boost::lockfree::queue<T, 
+        boost::lockfree::capacity<Const::queueCapacity>, 
+        boost::lockfree::fixed_sized<true>> queue_;
 };
 
 /**************************************************************************/
@@ -124,8 +138,8 @@ template <MsgPtr T>
 class MoodycamelLockFreeQueue {
 public:
     using value_type = T;
-    MoodycamelLockFreeQueue(size_t capacity) {
-        std::cout << "Using MoodycamelLockFreeQueue\n";
+    MoodycamelLockFreeQueue() : queue_(Const::queueCapacity) {
+        std::cout << "Using MoodycamelLockFreeQueue " << Const::queueCapacity << " capacity...\n";
     }
     inline bool enqueue(T ptr) {
         return queue_.enqueue(ptr);
