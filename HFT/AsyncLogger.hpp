@@ -1,0 +1,77 @@
+#pragma once
+
+#include <atomic>
+#include <semaphore>
+#include <thread>
+#include <iostream>
+#include <stdexcept>
+#include "Queue.hpp"
+#include "MemoryPool.hpp"
+
+namespace Const {
+#ifdef LOG_BUFFER_SIZE
+    constexpr size_t LogBufferSize = LOG_BUFFER_SIZE;
+#else
+    constexpr size_t LogBufferSize = 512;
+#endif
+};
+
+struct alignas(64) LogMsg {
+    char buffer[Const::LogBufferSize];
+    size_t len = 0;
+};
+
+class AsyncLogger {
+public:
+    using LogMsgPtr = LogMsg*;
+    AsyncLogger(std::ostream& outStream) 
+            : outStream_(outStream)
+            , msgReady_(0)
+            , runFlag_(true) {
+        
+        loggerThread_ = std::thread(&AsyncLogger::LoggerThread, this);
+    }
+    ~AsyncLogger() {
+        outStream_.flush();
+        runFlag_ = false;
+        msgReady_.release();  // Wake up logger thread if waiting
+        if (loggerThread_.joinable())
+            loggerThread_.join();
+    }
+
+    template<typename... Args>
+    inline void log(const char* fmt, Args&&... args) {
+        LogMsgPtr msg = pool_.allocate();
+        if (!msg) {
+            throw std::runtime_error("Logger Pool Exhausted");
+        }
+
+        int len = std::snprintf(msg->buffer, sizeof(msg->buffer), fmt, std::forward<Args>(args)...);
+        if (len < 0) {
+            pool_.deallocate(msg);
+            throw std::runtime_error("Encoding error during formatting");
+        }
+        msg->len = (len < (int)sizeof(msg->buffer)) ? len : (int)sizeof(msg->buffer) - 1;
+
+        queue_.enqueue(msg);
+        msgReady_.release();  // Notify the logger thread
+    }
+
+private:
+    void LoggerThread() {
+        while (runFlag_.load()) {
+            msgReady_.acquire(); // Wait till notified
+            while (LogMsg* msg = queue_.dequeue()) {
+                outStream_.write(msg->buffer, msg->len);
+                pool_.deallocate(msg);
+            }
+        }       
+    }
+
+    std::ostream& outStream_;
+    std::thread loggerThread_;
+    std::atomic<bool> runFlag_;
+    std::binary_semaphore msgReady_;
+    Queue<CustomMPMCLockFreeQueue<LogMsgPtr>> queue_;
+    MemoryPool<LockFreeThreadSafePool<LogMsg, true>> pool_;
+};
