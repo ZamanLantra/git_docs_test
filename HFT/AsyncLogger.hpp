@@ -1,7 +1,6 @@
 #pragma once
 
 #include <atomic>
-#include <semaphore>
 #include <thread>
 #include <iostream>
 #include <stdexcept>
@@ -26,21 +25,19 @@ public:
     using LogMsgPtr = LogMsg*;
     AsyncLogger(std::ostream& outStream) 
             : outStream_(outStream)
-            , msgReady_(0)
             , runFlag_(true) {
         
         loggerThread_ = std::thread(&AsyncLogger::LoggerThread, this);
     }
     ~AsyncLogger() {
-        outStream_.flush();
         runFlag_ = false;
-        msgReady_.release();  // Wake up logger thread if waiting
         if (loggerThread_.joinable())
             loggerThread_.join();
+        outStream_.flush();
     }
 
     template<typename... Args>
-    inline void log(const char* fmt, Args&&... args) {
+    void log(const char* fmt, Args&&... args) {
         LogMsgPtr msg = pool_.allocate();
         if (!msg) {
             throw std::runtime_error("Logger Pool Exhausted");
@@ -54,24 +51,30 @@ public:
         msg->len = (len < (int)sizeof(msg->buffer)) ? len : (int)sizeof(msg->buffer) - 1;
 
         queue_.enqueue(msg);
-        msgReady_.release();  // Notify the logger thread
     }
 
 private:
     void LoggerThread() {
+        uint32_t spin = 0;
         while (runFlag_.load()) {
-            msgReady_.acquire(); // Wait till notified
-            while (LogMsg* msg = queue_.dequeue()) {
+            if (LogMsgPtr msg = queue_.dequeue()) {
                 outStream_.write(msg->buffer, msg->len);
                 pool_.deallocate(msg);
+                spin = 0;
+            } 
+            else if (++spin < 1000) {
+                std::this_thread::yield();                                  // Fast retry (cheap when hot)
+            } 
+            else {
+                std::this_thread::sleep_for(std::chrono::microseconds(50)); // Idle fallback
+                spin = 0;
             }
         }       
     }
 
     std::ostream& outStream_;
     std::thread loggerThread_;
-    std::atomic<bool> runFlag_;
-    std::binary_semaphore msgReady_;
+    alignas(64) std::atomic<bool> runFlag_;
     Queue<CustomMPMCLockFreeQueue<LogMsgPtr>> queue_;
     MemoryPool<LockFreeThreadSafePool<LogMsg, true>> pool_;
 };

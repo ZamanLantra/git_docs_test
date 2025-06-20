@@ -51,6 +51,8 @@ int main() {
             );
         }
 
+        std::this_thread::sleep_for(std::chrono::seconds(5)); // Not a requirement, just wait for sometime without logging messages
+
         for (auto& t : workers) {
             t.join();
         }
