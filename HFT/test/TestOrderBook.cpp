@@ -36,6 +36,8 @@ void benchmark_orderbook() {
     }
     auto end_insert = high_resolution_clock::now();
 
+    book.print(std::cout, "Insert", 5);
+
     // Benchmark update
     auto start_update = high_resolution_clock::now();
     for (auto& o : orders) {
@@ -45,12 +47,16 @@ void benchmark_orderbook() {
     }
     auto end_update = high_resolution_clock::now();
 
+    book.print(std::cout, "Update", 5);
+
     // Benchmark cancel
     auto start_cancel = high_resolution_clock::now();
     for (const auto& o : orders) {
         book.cancel(o.order_id);
     }
     auto end_cancel = high_resolution_clock::now();
+
+    book.print(std::cout, "Cancel", 5);
 
     auto duration_insert = duration_cast<milliseconds>(end_insert - start_insert).count();
     auto duration_update = duration_cast<milliseconds>(end_update - start_update).count();
@@ -65,7 +71,6 @@ void benchmark_orderbook() {
     std::cout << "🔴 Cancel Time: " << duration_cancel << " ms → "
               << (Const::NumOrders * 1000.0 / duration_cancel) << " ops/sec\n";
 
-    // Final check: best bid/ask should be (0, 0)
     auto best_bid = book.bestBid();
     auto best_ask = book.bestAsk();
     std::cout << "Best Bid: " << best_bid.first << " Size: " << best_bid.second << "\n";
@@ -85,8 +90,11 @@ int main() {
             Order o2{2, 101.0, 5, false};   // Sell order
             book.insert(&o1);
             book.insert(&o2);
+            book.print(std::cout, "Inserted", 5);
             book.update(1, 15);
+            book.print(std::cout, "Update", 5);
             book.cancel(2);
+            book.print(std::cout, "Cancel", 5);
             auto best_bid = book.bestBid();
             auto best_ask = book.bestAsk();
             std::cout << "Best Bid: " << best_bid.first << " Size: " << best_bid.second << "\n";

@@ -9,6 +9,15 @@
 #include <cassert>
 #include <random>
 #include <chrono>
+#include <fstream>
+#include <iomanip>
+#include <ranges>
+#include <algorithm>
+
+#define COLOR_RED     "\033[31m"
+#define COLOR_GREEN   "\033[32m"
+#define COLOR_YELLOW  "\033[33m"
+#define COLOR_RESET   "\033[0m"
 
 namespace Const {
     constexpr size_t PoolSize = 10'000'000; 
@@ -116,6 +125,41 @@ public:
         return { bestAskPrice, askLevels_[bestAskIndex_] };
     }
 
+    void print(std::ostream& stream, const std::string& title, size_t count = 10) const {
+        stream << "----- Order Book [" << title << "] (Top " << count << " levels) -----\n";
+
+        std::vector<std::pair<double, int>> asks, bids;
+        asks.reserve(count);
+        bids.reserve(count);
+        for (int i = bestAskIndex_; i < Const::MaxPriceLevels && asks.size() < count; ++i) {
+            if (askLevels_[i] > 0) 
+                asks.emplace_back(indexToPrice(i), askLevels_[i]);
+        }
+        std::ranges::reverse(asks);
+        for (int i = bestBidIndex_; i >= 0 && bids.size() < count; --i) {
+            if (bidLevels_[i] > 0)
+                bids.emplace_back(indexToPrice(i), bidLevels_[i]);
+        }
+        
+        auto printVector = [&](std::vector<std::pair<double, int>>& vec) {
+            for (auto& [price, quantity] : vec) {
+                stream << std::setw(10) << quantity << " | @";
+                stream << std::fixed << std::setprecision(2) << price << "\n";
+            }
+        };
+
+        // TODO : If one side has no orders, midPrice is wrong!!!
+        double midPrice = (indexToPrice(bestAskIndex_) + indexToPrice(bestBidIndex_)) / 2.0;
+        stream << "   Quantity |   Price\n";
+        stream << "------------------------\n";
+        stream << COLOR_RED;
+        printVector(asks);
+        stream << COLOR_YELLOW << ">>>>> Mid @";
+        stream << std::fixed << std::setprecision(2) << midPrice << " <<<<<\n";
+        stream << COLOR_GREEN;
+        printVector(bids);
+        stream << COLOR_RESET;
+    }
 private:
     inline int priceToIndex(double price) const {
         return static_cast<int>(price * Const::TicksPerUnit);
@@ -135,10 +179,11 @@ private:
                         bestBidIndex_ = i;
                         return;
                     }
-                }      
-            }
-            bestBidIndex_ = 0;
-        } else {
+                }  
+                bestBidIndex_ = 0;    
+            }   
+        } 
+        else {
             askLevels_[idx] += updateQuantity;
             if (idx == bestAskIndex_ && askLevels_[idx] == 0) {
                 for (int i = idx + 1; i < Const::MaxPriceLevels; ++i) {
@@ -147,8 +192,8 @@ private:
                         return;
                     }
                 }
-            }
-            bestAskIndex_ = Const::MaxPriceLevels - 1;
+                bestAskIndex_ = Const::MaxPriceLevels - 1;
+            }    
         }
     }
 
