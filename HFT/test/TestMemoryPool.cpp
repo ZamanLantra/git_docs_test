@@ -1,9 +1,9 @@
 /*
-$ g++ -std=c++20 -O3 -o TestMemoryPool TestMemoryPool.cpp -DPOOL_MSG_COUNT=100000
+$ g++ -std=c++20 -O3 -o TestMemoryPool TestMemoryPool.cpp -I../ -DPOOL_MSG_COUNT=100000
 $ numactl --physcpubind=4 ./TestMemoryPool
 */
 
-#include "../MemoryPool.hpp"
+#include "MemoryPool.hpp"
 #include <thread>
 
 struct alignas(64) Msg {

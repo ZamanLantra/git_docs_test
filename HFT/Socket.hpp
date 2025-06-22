@@ -1,6 +1,10 @@
 #pragma once
 
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/epoll.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <utility>
 #include <iostream>

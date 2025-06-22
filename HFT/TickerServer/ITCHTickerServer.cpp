@@ -1,4 +1,4 @@
-// g++ -std=c++20 TickerServer.cpp -o TickerServer -I../
+// g++ -std=c++20 ITCHTickerServer.cpp -o ITCHTickerServer -I../
 
 #include <sys/socket.h>
 #include <netinet/in.h>
