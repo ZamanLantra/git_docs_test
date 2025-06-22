@@ -22,6 +22,7 @@ namespace Config {
     constexpr int multicastPort = 30001;
     constexpr int multicastThrottle_us = 100;
 
+    constexpr std::string snapshotIP = "127.0.0.1";
     constexpr int snapshotPort = 8080;
     constexpr int maxSnapshotEvents = 100;
 };
@@ -123,6 +124,7 @@ private:
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = INADDR_ANY;
         address.sin_port = htons(Config::snapshotPort);
+        inet_pton(AF_INET, Config::snapshotIP.c_str(), &address.sin_addr);
 
         if (bind(serverFD_.get(), reinterpret_cast<sockaddr*>(&address), sizeof(address)) < 0)
             throw std::runtime_error("bind SnapshotServer failed");
@@ -201,6 +203,7 @@ private:
     }
 
     void serveGapRequest(ITCHGapRequestMsgPtr msg, int fd) {
+        std::cout << "serveGapRequest start:" << msg->start_seq << " end:" << msg->end_seq << "\n";
         if (msg->start_seq > msg->end_seq || msg->start_seq < 0 || msg->end_seq >= tradeMsgStore_.size()) {
             std::cerr << "Requested invalid gap start:" << msg->start_seq << " end:" << msg->end_seq 
                 << " store size:" << tradeMsgStore_.size() << "\n";
@@ -211,6 +214,7 @@ private:
     }
 
     void replayAll(ITCHGapRequestMsgPtr msg, int fd) {
+        std::cout << "replayAll start:" << msg->start_seq << " end:" << msg->end_seq << "\n";
         for (int i = 0; i < tradeMsgStore_.size(); ++i) {
             send(fd, (void*)tradeMsgStore_.get(i), ITCHTradeMsgSize, 0);
         }
@@ -233,6 +237,7 @@ public:
         std::cout << "MulticastServer destroyed\n";
     }
     void run() {
+        std::this_thread::sleep_for(std::chrono::seconds(5)); 
         std::cout << "Running MulticastServer...\n";
         createMulticastServer();
         serveClients();  
@@ -249,6 +254,7 @@ private:
     }
     void serveClients() {
         for (int i = 0; i < tradeMsgStore_.size(); ++i) {
+            if ((i+1) % 1000 == 0 || (i+2) % 1000 == 0) continue; // Artificially create gaps
             if (sendto(serverFD_.get(), (void*)tradeMsgStore_.get(i), ITCHTradeMsgSize, 
                     0, (sockaddr*)&server_addr_, sizeof(server_addr_)) < 0) {
                 std::cerr << "Failed to send trade msg " << i << " at MulticastServer\n";

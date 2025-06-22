@@ -1,6 +1,6 @@
-// g++ -std=c++20 -O3 TestAsyncLogger.cpp -o TestAsyncLogger
+// g++ -std=c++20 -O3 TestAsyncLogger.cpp -o TestAsyncLogger -I../
 
-#include "../AsyncLogger.hpp"
+#include "AsyncLogger.hpp"
 #include <thread>
 #include <vector>
 #include <chrono>

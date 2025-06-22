@@ -3,32 +3,24 @@
 #include <thread>
 #include <chrono>
 #include <functional>
+#include <fstream>
 
 #include "Socket.hpp"
 #include "Queue.hpp"
 #include "HashMap.hpp"
 #include "MemoryPool.hpp"
-
+#include "AsyncLogger.hpp"
 #include "ITCHMessages.hpp"
 
 namespace Config {
+    constexpr bool debug = true;
     constexpr std::string multicastIP = "239.255.0.1";
     constexpr int multicastPort = 30001;
     constexpr int multicastThrottle_us = 100;
 
-    const std::string recoveryIP = "127.0.0.1";
+    constexpr std::string recoveryIP = "127.0.0.1";
     constexpr int recoveryPort = 8080;
     constexpr int maxSnapshotEvents = 100;
-};
-
-/**************************************************************************/
-class IThreadRunner {
-public:
-    virtual ~IThreadRunner() {}
-    virtual void run() = 0;
-    void stop() { runFlag.store(false); }
-protected:
-    alignas(64) std::atomic<bool> runFlag{true};
 };
 
 /**************************************************************************/
@@ -37,12 +29,14 @@ class TradeRecoveryManager {
 public:
     using TradeMsgPtr = TradeMsg*;
     using SequencerOnMsgCB = std::function<void(TradeMsgPtr)>;
-    TradeRecoveryManager(SequencerOnMsgCB cb, Pool& pool) 
+    TradeRecoveryManager(SequencerOnMsgCB cb, Pool& pool, AsyncLogger& logger) 
             : sequencerOnMsgCB_(std::move(cb))
-            , msgPool_(pool) {
+            , msgPool_(pool)
+            , logger_(logger) {
         
     }
     void connect() {
+        logger_.log("TradeRecoveryManager connect\n");
         socketFD_ = Socket(AF_INET, SOCK_STREAM, 0);
         if (socketFD_.get() < 0) 
             throw std::runtime_error("Failed to create TradeRecoveryManager socket");
@@ -50,7 +44,8 @@ public:
         sockaddr_in addr{};
         addr.sin_family = AF_INET;
         addr.sin_port = htons(Config::recoveryPort);
-        inet_pton(AF_INET, Config::recoveryIP.c_str(), &addr.sin_addr);
+        if (inet_pton(AF_INET, Config::recoveryIP.c_str(), &addr.sin_addr) < 0) 
+            throw std::runtime_error("Failed to create inet_pton at TradeRecoveryManager");
 
         if (::connect(socketFD_.get(), (sockaddr*)&addr, sizeof(addr)) < 0)
             throw std::runtime_error("Failed to connect at TradeRecoveryManager");
@@ -64,6 +59,8 @@ public:
     }
 private:
     void sendRecoveryRequest(const uint64_t startSeq, const uint64_t endSeq) {
+        if constexpr (Config::debug) 
+            logger_.log("sendRecoveryRequest start:%llu end %llu\n", startSeq, endSeq);
         ITCHGapRequestMsg req{'0', startSeq, endSeq};
         ssize_t sent = send(socketFD_.get(), &req, sizeof(req), 0);
         if (sent != sizeof(req))
@@ -100,9 +97,10 @@ private:
                     }
                     continue;
                 }
+                if constexpr (Config::debug) 
+                    logger_.log("receiveRecoveryMessages received:%llu\n", msg->sequence_number);
                 sequencerOnMsgCB_(msg);
                 ++messagesReceived;
-                std::cout << "Received message #" << messagesReceived << "\n";
             } 
             else if (nfds == 0) {
                 std::cerr << "Timeout waiting for data at receiveRecoveryMessages\n";
@@ -116,28 +114,35 @@ private:
     }
     SequencerOnMsgCB sequencerOnMsgCB_;
     Pool& msgPool_;
+    AsyncLogger& logger_;
     Socket socketFD_{-1};
 };
 
 /**************************************************************************/
 template <typename TradeMsg, MyQ RecvMsgQueue, MyQ SendMsgQueue, MyPool Pool>
-class TradeDataSequencer : public IThreadRunner {
+class TradeDataSequencer {
 public:
     using TradeMsgPtr = TradeMsg*;
 
-    TradeDataSequencer(RecvMsgQueue& recvQueue, SendMsgQueue& sendQueue, Pool& pool) 
+    TradeDataSequencer(RecvMsgQueue& recvQueue, SendMsgQueue& sendQueue, Pool& pool, AsyncLogger& logger) 
             : recvQueue_(recvQueue)
             , sendQueue_(sendQueue)
             , msgPool_(pool)
-            , tradeRecoveryManager_([this](TradeMsgPtr msg) { onRecoveredMsg(msg); }, pool) {
-        tradeRecoveryManager_.connect();
-    }
-    ~TradeDataSequencer() override {
+            , tradeRecoveryManager_([this](TradeMsgPtr msg) { onRecoveredMsg(msg); }, pool, logger)
+            , logger_(logger) {
         
     }
-
-    void run() override {
-        while (runFlag.load(std::memory_order_relaxed)) {
+    ~TradeDataSequencer() {
+        
+    }
+    void stop() {
+        logger_.log("TradeDataSequencer stop\n");
+        runFlag_.store(false, std::memory_order_relaxed);
+    }
+    void run() {
+        logger_.log("TradeDataSequencer run\n");
+        tradeRecoveryManager_.connect();
+        while (runFlag_.load(std::memory_order_relaxed)) {
             TradeMsgPtr msg = recvQueue_.dequeue();
             if (!msg) {
                 std::this_thread::yield();
@@ -152,6 +157,7 @@ public:
                 msgPool_.deallocate(msg);
                 continue;
             }
+            if constexpr (Config::debug) logger_.log("TradeDataSequencer received msg %llu\n", msg->sequence_number);
             sendQueue_.enqueue(msg);
             ++nextSequence_;
         }    
@@ -174,22 +180,130 @@ private:
     SendMsgQueue& sendQueue_;
     Pool& msgPool_;
     TradeRecoveryManager<TradeMsg, Pool> tradeRecoveryManager_;
+    AsyncLogger& logger_;
     uint64_t nextSequence_ = 0;
+    alignas(64) std::atomic<bool> runFlag_{true};
 };
 
 /**************************************************************************/
+template <typename TradeMsg, MyQ SendMsgQueue, MyPool Pool>
+class MulticastTradeDataReceiver {
+public:
+    using TradeMsgPtr = TradeMsg*;
 
+    MulticastTradeDataReceiver(SendMsgQueue& queue, Pool& pool, AsyncLogger& logger) 
+            : queue_(queue)
+            , pool_(pool)
+            , logger_(logger) {
+        
+    }
+    ~MulticastTradeDataReceiver() {}
+    void stop() {
+        logger_.log("MulticastTradeDataReceiver stop called\n");
+        runFlag_.store(false, std::memory_order_relaxed);
+    }
+    void connect() {
+        if constexpr (Config::debug) logger_.log("connect MulticastTradeDataReceiver\n");
+        
+        socketFD_ = Socket(AF_INET, SOCK_DGRAM, 0);
+        if (socketFD_.get() < 0) {
+            throw std::runtime_error("Failed to create MulticastTradeDataReceiver socket");
+        }
+
+        int reuse = 1;
+        if (setsockopt(socketFD_.get(), SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(reuse)) < 0) {
+            throw std::runtime_error("Failed to SO_REUSEADDR at MulticastTradeDataReceiver"); 
+        }
+
+        sockaddr_in localAddr{};
+        localAddr.sin_family = AF_INET;
+        localAddr.sin_port = htons(Config::multicastPort);
+        localAddr.sin_addr.s_addr = INADDR_ANY;
+
+        if (bind(socketFD_.get(), (sockaddr*)&localAddr, sizeof(localAddr)) < 0) {
+            throw std::runtime_error("Failed to bind at MulticastTradeDataReceiver");
+        }
+
+        ip_mreq mreq{};
+        if (inet_pton(AF_INET, Config::multicastIP.c_str(), &mreq.imr_multiaddr) < 0) {
+            throw std::runtime_error("Failed to create inet_pton at MulticastTradeDataReceiver");
+        }
+
+        mreq.imr_interface.s_addr = INADDR_ANY;
+
+        if (setsockopt(socketFD_.get(), IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+            throw std::runtime_error("Failed to IP_ADD_MEMBERSHIP at MulticastTradeDataReceiver");
+        }
+    }
+    void run() {
+        logger_.log("running MulticastTradeDataReceiver\n");
+        while (runFlag_.load(std::memory_order_relaxed)) {
+            TradeMsgPtr msg = pool_.allocate();
+            if (!msg) {
+                throw std::runtime_error("Msg Pool exhausted at MulticastTradeDataReceiver");
+            }
+            ssize_t len = recv(socketFD_.get(), msg, ITCHTradeMsgSize, 0);
+            if (len < 0) {
+                std::cerr << "MulticastTradeDataReceiver recv failed";
+                pool_.deallocate(msg);
+                continue;
+            }
+            queue_.enqueue(msg);
+            //if constexpr (Config::debug) logger_.log("MC received msg %llu\n", msg->sequence_number);
+        }
+    }
+private:
+    SendMsgQueue& queue_;
+    Pool& pool_;
+    AsyncLogger& logger_;
+    Socket socketFD_{-1};
+    alignas(64) std::atomic<bool> runFlag_{true};
+};
+
+/**************************************************************************/
 int main() {
-    
-    LockFreeThreadSafePool<ITCHTradeMsg, true> msgPool;
+    std::ofstream file("log_file.txt"); 
+    AsyncLogger logger(file); // Can use std::cout instead of file
 
-    CustomSPSCLockFreeQueue<ITCHTradeMsg*> recvQueue;
-    CustomSPSCLockFreeQueue<ITCHTradeMsg*> sendQueue;
+    logger.log("Main Start\n");
+
+    using MsgPool = LockFreeThreadSafePool<ITCHTradeMsg, true>;
+    using TradeReeiverToSequencerQ = CustomSPSCLockFreeQueue<ITCHTradeMsg*>;
+    using SequencerToXQ = CustomSPSCLockFreeQueue<ITCHTradeMsg*>;
+
+    using TradeDataSequencerT = TradeDataSequencer<ITCHTradeMsg, TradeReeiverToSequencerQ, 
+                                        SequencerToXQ, MsgPool>;
+    using MulticastTradeDataReceiverT = MulticastTradeDataReceiver<ITCHTradeMsg, 
+                                        TradeReeiverToSequencerQ, MsgPool>;
+
+    TradeReeiverToSequencerQ tradeReeiverToSequencerQ;
+    SequencerToXQ sendQ;
+    MsgPool msgPool;
+
+    MulticastTradeDataReceiverT multicastTradeReceiver(tradeReeiverToSequencerQ, msgPool, logger);
+    TradeDataSequencerT tradeSequencer(tradeReeiverToSequencerQ, sendQ, msgPool, logger);
     
-    TradeDataSequencer<ITCHTradeMsg, 
-        CustomSPSCLockFreeQueue<ITCHTradeMsg*>, 
-        CustomSPSCLockFreeQueue<ITCHTradeMsg*>,
-        LockFreeThreadSafePool<ITCHTradeMsg, true>> tradeSequencer(recvQueue, sendQueue, msgPool);
+    multicastTradeReceiver.connect();
+    std::this_thread::sleep_for(std::chrono::seconds(1)); 
+
+    logger.log("Starting Threads for TradeDataSequencer and MulticastTradeDataReceiver\n");
+
+    std::vector<std::thread> threads {};
+
+    try {
+        threads.emplace_back(&TradeDataSequencerT::run, &tradeSequencer);
+        threads.emplace_back(&MulticastTradeDataReceiverT::run, &multicastTradeReceiver);
+    } catch (const std::exception& ex) {
+        std::cerr << "Exception1: " << ex.what() << "\n";
+    }
+
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+    logger.log("Stopping Threads for TradeDataSequencer and MulticastTradeDataReceiver\n");
+    tradeSequencer.stop();
+    multicastTradeReceiver.stop();
+ 
+    for (auto& thr : threads) 
+        thr.join();
     
-    std::thread seqThread([&] { tradeSequencer.run(); });
+    logger.log("Main End\n");
 }
