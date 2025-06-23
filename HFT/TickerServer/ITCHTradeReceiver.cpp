@@ -1,4 +1,4 @@
-// g++ -std=c++20 ITCHTradeReceiver.cpp -o ITCHTradeReceiver -I../
+// g++ -std=c++20 ITCHTradeReceiver.cpp -o ITCHTradeReceiver -I../ -DPOOL_MSG_COUNT=400000
 
 #include <thread>
 #include <chrono>
@@ -16,11 +16,11 @@ namespace Config {
     constexpr bool debug = true;
     constexpr std::string multicastIP = "239.255.0.1";
     constexpr int multicastPort = 30001;
-    constexpr int multicastThrottle_us = 100;
 
     constexpr std::string recoveryIP = "127.0.0.1";
     constexpr int recoveryPort = 8080;
     constexpr int maxSnapshotEvents = 100;
+    constexpr int recoveryConnectionAttempts = 50;
 };
 
 /**************************************************************************/
@@ -40,6 +40,10 @@ public:
         socketFD_ = Socket(AF_INET, SOCK_STREAM, 0);
         if (socketFD_.get() < 0) 
             throw std::runtime_error("Failed to create TradeRecoveryManager socket");
+        
+        int flag = 1;
+        if (setsockopt(socketFD_.get(), IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag)) < 0)
+            throw std::runtime_error("Failed to set TCP_NODELAY");
 
         sockaddr_in addr{};
         addr.sin_family = AF_INET;
@@ -47,9 +51,17 @@ public:
         if (inet_pton(AF_INET, Config::recoveryIP.c_str(), &addr.sin_addr) < 0) 
             throw std::runtime_error("Failed to create inet_pton at TradeRecoveryManager");
 
-        if (::connect(socketFD_.get(), (sockaddr*)&addr, sizeof(addr)) < 0)
+        int connectStatus = -1;
+        for (int i = 1; i <= Config::recoveryConnectionAttempts; ++i) { // Retry
+            logger_.log("TradeRecoveryManager trying to connect to server... [attempt:%d]\n", i);
+            connectStatus = ::connect(socketFD_.get(), (sockaddr*)&addr, sizeof(addr));
+            if (connectStatus == 0) break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        }
+        if (connectStatus < 0) 
             throw std::runtime_error("Failed to connect at TradeRecoveryManager");
-        
+        logger_.log("TradeRecoveryManager connected to server...\n");
+
         int flags = fcntl(socketFD_.get(), F_GETFL, 0);
         fcntl(socketFD_.get(), F_SETFL, flags | O_NONBLOCK);
     }
@@ -63,19 +75,19 @@ private:
             logger_.log("sendRecoveryRequest start:%llu end %llu\n", startSeq, endSeq);
         ITCHGapRequestMsg req{'0', startSeq, endSeq};
         ssize_t sent = send(socketFD_.get(), &req, sizeof(req), 0);
-        if (sent != sizeof(req))
+        if (sent != sizeof(req)) [[unlikely]]
             throw std::runtime_error("Failed to send full recovery request at sendRecoveryRequest");
     }
     void receiveRecoveryMessages(uint64_t startSeq, uint64_t endSeq) {
         Socket epollFD(epoll_create1(0));
-        if (epollFD.get() < 0) 
+        if (epollFD.get() < 0) [[unlikely]]
             throw std::runtime_error("epoll_create1() failed at receiveRecoveryMessages");
 
         epoll_event ev{}, event{};
         ev.events = EPOLLIN;
         ev.data.fd = socketFD_.get();
 
-        if (epoll_ctl(epollFD.get(), EPOLL_CTL_ADD, socketFD_.get(), &ev) < 0)
+        if (epoll_ctl(epollFD.get(), EPOLL_CTL_ADD, socketFD_.get(), &ev) < 0) [[unlikely]]
             throw std::runtime_error("epoll_ctl() failed at receiveRecoveryMessages");
 
         uint64_t messagesReceived = 0;
@@ -89,7 +101,7 @@ private:
                 if (bytes != ITCHTradeMsgSize) [[unlikely]] {
                     msgPool_.deallocate(msg);
                     if (bytes <= 0) {
-                        std::cerr << "Connection closed or error\n";
+                        std::cerr << "Connection closed or error\n"; // TODO : Add reconnect attempt
                         break;
                     } 
                     else {
@@ -102,13 +114,15 @@ private:
                 sequencerOnMsgCB_(msg);
                 ++messagesReceived;
             } 
-            else if (nfds == 0) {
-                std::cerr << "Timeout waiting for data at receiveRecoveryMessages\n";
-                continue;
-            } 
-            else {
-                std::cerr << "Recovery Server Not responded at receiveRecoveryMessages\n";
-                break;
+            else [[unlikely]] {
+                if (nfds == 0) {
+                    std::cerr << "Timeout waiting for data at receiveRecoveryMessages\n";
+                    continue;
+                } 
+                else {
+                    std::cerr << "Recovery Server Not responded at receiveRecoveryMessages\n";
+                    break;
+                }
             }
         }
     }
@@ -148,16 +162,20 @@ public:
                 std::this_thread::yield();
                 continue;
             }
-            if (msg->sequence_number > nextSequence_) {
+            if (msg->sequence_number > nextSequence_) [[unlikely]] {
                 // TODO : Send an invalidate message, avoid taking decisions on stale data
+                logger_.log("Gap from %llu to %llu, initiating recovery\n", nextSequence_, msg->sequence_number - 1);
                 tradeRecoveryManager_.recover(nextSequence_, msg->sequence_number - 1); // Blocking, required to keep the sequence
                 // TODO : Not here, but send a validate message, considering some condition
             } 
-            else if (msg->sequence_number < nextSequence_) { // Old message received, drop message   
+            else if (msg->sequence_number < nextSequence_) [[unlikely]] { // Old message received, drop message   
+                if constexpr (Config::debug) 
+                    logger_.log("MC Old msg received, drop! expected %llu, got %llu\n", nextSequence_, msg->sequence_number);
                 msgPool_.deallocate(msg);
                 continue;
             }
-            if constexpr (Config::debug) logger_.log("TradeDataSequencer received msg %llu\n", msg->sequence_number);
+            if constexpr (Config::debug) 
+                logger_.log("TradeDataSequencer received msg %llu\n", msg->sequence_number);
             sendQueue_.enqueue(msg);
             ++nextSequence_;
         }    
@@ -168,7 +186,7 @@ public:
 
 private:
     void onRecoveredMsg(TradeMsgPtr msg) {
-        if (msg->sequence_number != nextSequence_) {
+        if (msg->sequence_number != nextSequence_) [[unlikely]] {
             std::cerr << "Unrecoverable Gap [received seq: " << msg->sequence_number << "] [" <<
                 "expected: " << nextSequence_ << "\n";
             throw std::runtime_error("Failed to recover message");
@@ -243,7 +261,7 @@ public:
                 throw std::runtime_error("Msg Pool exhausted at MulticastTradeDataReceiver");
             }
             ssize_t len = recv(socketFD_.get(), msg, ITCHTradeMsgSize, 0);
-            if (len < 0) {
+            if (len < 0) [[unlikely]] {
                 std::cerr << "MulticastTradeDataReceiver recv failed";
                 pool_.deallocate(msg);
                 continue;
@@ -262,29 +280,29 @@ private:
 
 /**************************************************************************/
 int main() {
-    std::ofstream file("log_file.txt"); 
+    std::ofstream file("log_ITCHTradeReceiver.txt"); 
     AsyncLogger logger(file); // Can use std::cout instead of file
 
     logger.log("Main Start\n");
 
     using MsgPool = LockFreeThreadSafePool<ITCHTradeMsg, true>;
-    using TradeReeiverToSequencerQ = CustomSPSCLockFreeQueue<ITCHTradeMsg*>;
-    using SequencerToXQ = CustomSPSCLockFreeQueue<ITCHTradeMsg*>;
+    using TradeReceiverToSequencerQ = CustomSPSCLockFreeQueue<ITCHTradeMsg*>;
+    using SequencerToXQ = CustomSPSCLockFreeQueue<ITCHTradeMsg*>; // can use CustomMPMCLockFreeQueue as well
 
-    using TradeDataSequencerT = TradeDataSequencer<ITCHTradeMsg, TradeReeiverToSequencerQ, 
-                                        SequencerToXQ, MsgPool>;
+    using TradeDataSequencerT = TradeDataSequencer<ITCHTradeMsg, TradeReceiverToSequencerQ, 
+                                            SequencerToXQ, MsgPool>;
     using MulticastTradeDataReceiverT = MulticastTradeDataReceiver<ITCHTradeMsg, 
-                                        TradeReeiverToSequencerQ, MsgPool>;
+                                            TradeReceiverToSequencerQ, MsgPool>;
 
-    TradeReeiverToSequencerQ tradeReeiverToSequencerQ;
+    TradeReceiverToSequencerQ tradeReceiverToSequencerQ;
     SequencerToXQ sendQ;
     MsgPool msgPool;
 
-    MulticastTradeDataReceiverT multicastTradeReceiver(tradeReeiverToSequencerQ, msgPool, logger);
-    TradeDataSequencerT tradeSequencer(tradeReeiverToSequencerQ, sendQ, msgPool, logger);
+    MulticastTradeDataReceiverT multicastTradeReceiver(tradeReceiverToSequencerQ, msgPool, logger);
+    TradeDataSequencerT tradeSequencer(tradeReceiverToSequencerQ, sendQ, msgPool, logger);
     
     multicastTradeReceiver.connect();
-    std::this_thread::sleep_for(std::chrono::seconds(1)); 
+    std::this_thread::sleep_for(std::chrono::seconds(1)); // Check for readiness using a different method, login msg?
 
     logger.log("Starting Threads for TradeDataSequencer and MulticastTradeDataReceiver\n");
 
@@ -294,10 +312,10 @@ int main() {
         threads.emplace_back(&TradeDataSequencerT::run, &tradeSequencer);
         threads.emplace_back(&MulticastTradeDataReceiverT::run, &multicastTradeReceiver);
     } catch (const std::exception& ex) {
-        std::cerr << "Exception1: " << ex.what() << "\n";
+        std::cerr << "Exception in Spawning Threads: " << ex.what() << "\n";
     }
 
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    std::this_thread::sleep_for(std::chrono::seconds(30));
     logger.log("Stopping Threads for TradeDataSequencer and MulticastTradeDataReceiver\n");
     tradeSequencer.stop();
     multicastTradeReceiver.stop();

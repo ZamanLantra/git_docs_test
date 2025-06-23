@@ -20,7 +20,8 @@ namespace Config {
 
     constexpr std::string multicastIP = "239.255.0.1";
     constexpr int multicastPort = 30001;
-    constexpr int multicastThrottle_us = 100;
+    constexpr int multicastThrottle_us = 0;
+    constexpr bool createMulticastGap = false;
 
     constexpr std::string snapshotIP = "127.0.0.1";
     constexpr int snapshotPort = 8080;
@@ -254,12 +255,16 @@ private:
     }
     void serveClients() {
         for (int i = 0; i < tradeMsgStore_.size(); ++i) {
-            if ((i+1) % 1000 == 0 || (i+2) % 1000 == 0) continue; // Artificially create gaps
+            if constexpr (Config::createMulticastGap) {
+                if ((i+1) % 1000 == 0 || (i+2) % 1000 == 0) continue; // Artificially create gaps
+            }
             if (sendto(serverFD_.get(), (void*)tradeMsgStore_.get(i), ITCHTradeMsgSize, 
                     0, (sockaddr*)&server_addr_, sizeof(server_addr_)) < 0) {
                 std::cerr << "Failed to send trade msg " << i << " at MulticastServer\n";
             } 
-            std::this_thread::sleep_for(std::chrono::microseconds(Config::multicastThrottle_us)); 
+            if constexpr (Config::multicastThrottle_us > 0) {
+                std::this_thread::sleep_for(std::chrono::microseconds(Config::multicastThrottle_us)); 
+            }
         }
     }
 

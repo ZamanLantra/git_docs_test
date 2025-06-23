@@ -2,6 +2,8 @@
 
 #include <atomic>
 #include <thread>
+#include <chrono>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include "Queue.hpp"
@@ -55,18 +57,22 @@ public:
 
 private:
     void LoggerThread() {
+        using namespace std::chrono;
         uint32_t spin = 0;
         while (runFlag_.load()) {
             if (LogMsgPtr msg = queue_.dequeue()) {
+                auto now = high_resolution_clock::now();
+                outStream_ << "[" << duration_cast<nanoseconds>(now.time_since_epoch()).count() << "] | ";
                 outStream_.write(msg->buffer, msg->len);
+                outStream_.flush();
                 pool_.deallocate(msg);
                 spin = 0;
             } 
             else if (++spin < 1000) {
-                std::this_thread::yield();                                  // Fast retry (cheap when hot)
+                std::this_thread::yield();                     // Fast retry (cheap when hot)
             } 
             else {
-                std::this_thread::sleep_for(std::chrono::microseconds(50)); // Idle fallback
+                std::this_thread::sleep_for(microseconds(50)); // Idle fallback
                 spin = 0;
             }
         }       
