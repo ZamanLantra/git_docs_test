@@ -1,0 +1,19 @@
+name: Local Runner Test
+
+on:
+  push:
+    branches:
+      - main   # change to your branch if needed
+
+jobs:
+  local-test:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Run Test Script
+        run: echo "Running Tests" && run-local.sh
+
+      - name: Notify Success
+        run: echo "SUCCESS"
