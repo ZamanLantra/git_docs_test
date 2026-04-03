@@ -1,0 +1,713 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OP2 API &mdash; OP2 latest documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=c6e86fd7"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="prev" title="Developing an OP2 Application" href="devapp.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            OP2
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devapp.html">Developing an OP2 Application</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">OP2 API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#key-concepts-and-structure">Key Concepts and Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#op2-c-c-api">OP2 C/C++ API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#initialisation-and-termination">Initialisation and Termination</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_init"><code class="docutils literal notranslate"><span class="pre">op_init()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_exit"><code class="docutils literal notranslate"><span class="pre">op_exit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_decl_set"><code class="docutils literal notranslate"><span class="pre">op_decl_set()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_decl_map"><code class="docutils literal notranslate"><span class="pre">op_decl_map()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_partition"><code class="docutils literal notranslate"><span class="pre">op_partition()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_decl_const"><code class="docutils literal notranslate"><span class="pre">op_decl_const()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_decl_dat"><code class="docutils literal notranslate"><span class="pre">op_decl_dat()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_decl_dat_temp"><code class="docutils literal notranslate"><span class="pre">op_decl_dat_temp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_free_dat_temp"><code class="docutils literal notranslate"><span class="pre">op_free_dat_temp()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#dataset-layout">Dataset Layout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parallel-loops">Parallel Loops</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_par_loop"><code class="docutils literal notranslate"><span class="pre">op_par_loop()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_arg_gbl"><code class="docutils literal notranslate"><span class="pre">op_arg_gbl()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_arg_dat"><code class="docutils literal notranslate"><span class="pre">op_arg_dat()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_opt_arg_dat"><code class="docutils literal notranslate"><span class="pre">op_opt_arg_dat()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#hdf5-i-o">HDF5 I/O</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_decl_set_hdf5"><code class="docutils literal notranslate"><span class="pre">op_decl_set_hdf5()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_decl_map_hdf5"><code class="docutils literal notranslate"><span class="pre">op_decl_map_hdf5()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_decl_dat_hdf5"><code class="docutils literal notranslate"><span class="pre">op_decl_dat_hdf5()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_get_const_hdf5"><code class="docutils literal notranslate"><span class="pre">op_get_const_hdf5()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#mpi-without-hdf5-i-o">MPI without HDF5 I/O</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#other-i-o-and-utilities">Other I/O and Utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_printf"><code class="docutils literal notranslate"><span class="pre">op_printf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_fetch_data"><code class="docutils literal notranslate"><span class="pre">op_fetch_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_fetch_data_idx"><code class="docutils literal notranslate"><span class="pre">op_fetch_data_idx()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_fetch_data_hdf5_file"><code class="docutils literal notranslate"><span class="pre">op_fetch_data_hdf5_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_print_dat_to_binfile"><code class="docutils literal notranslate"><span class="pre">op_print_dat_to_binfile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_print_dat_to_txtfile"><code class="docutils literal notranslate"><span class="pre">op_print_dat_to_txtfile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_is_root"><code class="docutils literal notranslate"><span class="pre">op_is_root()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_get_size"><code class="docutils literal notranslate"><span class="pre">op_get_size()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_dump_to_hdf5"><code class="docutils literal notranslate"><span class="pre">op_dump_to_hdf5()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_timers"><code class="docutils literal notranslate"><span class="pre">op_timers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_timing_output"><code class="docutils literal notranslate"><span class="pre">op_timing_output()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_timings_to_csv"><code class="docutils literal notranslate"><span class="pre">op_timings_to_csv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c.op_diagnostic_output"><code class="docutils literal notranslate"><span class="pre">op_diagnostic_output()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="perf.html">Performance Tuning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer_guide.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pubs.html">Publications</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">OP2</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">OP2 API</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="op2-api">
+<h1>OP2 API<a class="headerlink" href="#op2-api" title="Link to this heading"></a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>The key characteristic of unstructured-mesh applications is the explicit connectivity required to specify the mesh and access data (indirectly) on neighboring mesh elements during computation over mesh elements. As such OP2 allows to describe an unstructured mesh by a number of sets, where depending on the application, these sets might be of nodes, edges, faces, cells of a variety of types, far-field boundary nodes, wall boundary faces, etc. Associated with these are data (e.g. coordinate data at nodes) and mappings to other sets (i.e. explicit connectivity, e.g. edge mapping to the two nodes at each end of the edge). All of the numerically-intensive operations can then be described as a loop over all members of a set, carrying out some operations on data associated directly with the set or with another set through a mapping.</p>
+</section>
+<section id="key-concepts-and-structure">
+<h2>Key Concepts and Structure<a class="headerlink" href="#key-concepts-and-structure" title="Link to this heading"></a></h2>
+<p>OP2 makes the important restriction that the order in which the function is applied to the members of the set must not affect the final result to within the limits of finite precision floating-point arithmetic. This allows the parallel implementation to choose its own ordering to achieve maximum parallel efficiency. Two other restrictions are that the sets and maps are static (i.e. they do not change) and the operands in the set operations are not referenced through a double level of mapping indirection (i.e. through a mapping to another set which in turn uses another mapping to data in a third set).</p>
+<p>OP2 currently enables users to write a single program at a high-level API declaring the unstructured-mesh problem. Then the OP2 code-generator can be used to automatically generate a number of different paralleizations, using different parallel programing models, targeting modern multi-core and many-core hardware. The most mature parallel code generated by OP2 are :</p>
+<ol class="arabic simple">
+<li><p>Single-threaded on a CPU including code parallelized using SIMD</p></li>
+<li><p>Multi-threaded using OpenMP for multicore CPU systems</p></li>
+<li><p>Parallelized using CUDA for NVIDIA GPUs.</p></li>
+</ol>
+<p>Further to these there are also in-development versions that can emit SYCL and AMD HIP for parallelization on a wider range of GPUs. All of the above can be combined with distributed-memory MPI parallelization to run of clusters of CPU or GPU nodes. The user can either use OP2’s parallel file I/O capabilities for HDF5 files with a specified structure, or perform their own parallel file I/O using custom MPI code.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This documentation describes the C++ API, but FORTRAN 90 is also supported with a very similar API.</p>
+</div>
+<p>A computational project can be viewed as involving three steps:</p>
+<ul class="simple">
+<li><p>Writing the program.</p></li>
+<li><p>Debugging the program, often using a small testcase.</p></li>
+<li><p>Running the program on increasingly large applications.</p></li>
+</ul>
+<p>With OP2 we want to simplify the first two tasks, while providing as much performance as possible for the third.</p>
+<p>To achieve the high performance for large applications, a code-generator is needed to generate the CUDA code for GPUs or OpenMP code for multicore x86 systems. However, to keep the initial development simple, a development single-threaded executable can be created without any special tools; the user’s main code is simply linked to a set of library routines, most of which do little more than error-checking to assist the debugging process by checking the correctness of the user’s program. Note that this single-threaded version will not execute efficiently. The code-generator is needed to generate efficient single-threaded (see 1. above) , SIMD and OpenMP code for CPU systems.</p>
+<p><a class="reference internal" href="#seq-build"><span class="std std-numref">Fig. 1</span></a> shows the build process for a single thread CPU executable. The user’s main program (in this case <code class="docutils literal notranslate"><span class="pre">jac.cpp</span></code>) uses the OP2 header file <code class="docutils literal notranslate"><span class="pre">op_seq.h</span></code> and is linked to the appropriate OP2 libraries using <code class="docutils literal notranslate"><span class="pre">g++</span></code>, perhaps controlled by a Makefile.</p>
+<figure class="align-center" id="id1">
+<span id="seq-build"></span><a class="reference internal image-reference" href="_images/seq-build.png"><img alt="_images/seq-build.png" src="_images/seq-build.png" style="width: 60%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Build process for a single-threaded development executable.</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p><a class="reference internal" href="#cuda-build"><span class="std std-numref">Fig. 2</span></a> shows the build process for the corresponding CUDA executable. The code-generator parses the user’s main program and produces a modified main program and a CUDA file which includes a separate file for each of the kernel functions. These are then compiled and linked to the OP libraries using <code class="docutils literal notranslate"><span class="pre">g++</span></code> and the NVIDIA CUDA compiler <code class="docutils literal notranslate"><span class="pre">nvcc</span></code>, again perhaps controlled by a Makefile.</p>
+<figure class="align-center" id="id2">
+<span id="cuda-build"></span><a class="reference internal image-reference" href="_images/cuda-build.png"><img alt="_images/cuda-build.png" src="_images/cuda-build.png" style="width: 90%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 2 </span><span class="caption-text">Build process for a CUDA accelerated executable.</span><a class="headerlink" href="#id2" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p><a class="reference internal" href="#openmp-build"><span class="std std-numref">Fig. 3</span></a> shows the OpenMP build process which is very similar to the CUDA process except that it uses <code class="docutils literal notranslate"><span class="pre">*.cpp</span></code> files produced by the code-generator instead of <code class="docutils literal notranslate"><span class="pre">*.cu</span></code> files.</p>
+<figure class="align-center" id="id3">
+<span id="openmp-build"></span><a class="reference internal image-reference" href="_images/openmp-build.png"><img alt="_images/openmp-build.png" src="_images/openmp-build.png" style="width: 90%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 3 </span><span class="caption-text">Build process for an OpenMP accelerated executable.</span><a class="headerlink" href="#id3" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>In looking at the API specification, users may think it is somewhat verbose in places. For example, users have to re-supply information about the datatype of the datasets being used in a parallel loop. This is a deliberate choice to simplify the task of the code-generator, and therefore hopefully reduce the chance for errors. It is also motivated by the thought that “programming is easy; it’s debugging which is difficult”: writing code isn’t time-consuming, it’s correcting it which takes the time. Therefore, it’s not unreasonable to ask the programmer to supply redundant information, but be assured that the code-generator or library will check that all redundant information is self-consistent. If you declare a dataset as being of type <code class="xref c c-type docutils literal notranslate"><span class="pre">OP_DOUBLE</span></code> and later say that it is of type <code class="xref c c-type docutils literal notranslate"><span class="pre">OP_FLOAT</span></code> this will be flagged up as an error at run-time.</p>
+</section>
+<section id="op2-c-c-api">
+<h2>OP2 C/C++ API<a class="headerlink" href="#op2-c-c-api" title="Link to this heading"></a></h2>
+<section id="initialisation-and-termination">
+<h3>Initialisation and Termination<a class="headerlink" href="#initialisation-and-termination" title="Link to this heading"></a></h3>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_init">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_init</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">argc</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">argv</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">diags_level</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_init" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine must be called before all other OP routines. Under MPI back-ends, this routine also calls <code class="xref c c-func docutils literal notranslate"><span class="pre">MPI_Init()</span></code> unless its already called previously.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>argc</strong> – The number of command line arguments.</p></li>
+<li><p><strong>argv</strong> – The command line arguments, as passed to <code class="xref c c-func docutils literal notranslate"><span class="pre">main()</span></code>.</p></li>
+<li><p><strong>diags_level</strong> – Determines the level of debugging diagnostics and reporting to be performed.</p></li>
+</ul>
+</dd>
+</dl>
+<p>The values for <strong>diags_level</strong> are as follows:</p>
+<ul class="simple">
+<li><p><span class="c-expr sig sig-inline c"><span class="m">0</span></span>: None.</p></li>
+<li><p><span class="c-expr sig sig-inline c"><span class="m">1</span></span>: Error-checking.</p></li>
+<li><p><span class="c-expr sig sig-inline c"><span class="m">2</span></span>: Info on plan construction.</p></li>
+<li><p><span class="c-expr sig sig-inline c"><span class="m">3</span></span>: Report execution of parallel loops.</p></li>
+<li><p><span class="c-expr sig sig-inline c"><span class="m">4</span></span>: Report use of old plans.</p></li>
+<li><p><span class="c-expr sig sig-inline c"><span class="m">7</span></span>: Report positive checks in <code class="xref c c-func docutils literal notranslate"><span class="pre">op_plan_check()</span></code></p></li>
+</ul>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_exit">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_exit</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_exit" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine must be called last to cleanly terminate the OP2 runtime. Under MPI back-ends, this routine also calls <code class="xref c c-func docutils literal notranslate"><span class="pre">MPI_Finalize()</span></code> unless its has been called previously. A runtime error will occur if <code class="xref c c-func docutils literal notranslate"><span class="pre">MPI_Finalize()</span></code> is called after <a class="reference internal" href="#c.op_exit" title="op_exit"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_exit()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_decl_set">
+<span class="n"><span class="pre">op_set</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_decl_set</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">size</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">name</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_decl_set" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine declares a set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>size</strong> – Number of set elements.</p></li>
+<li><p><strong>name</strong> – A name to be used for output diagnostics.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A set ID.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_decl_map">
+<span class="n"><span class="pre">op_map</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_decl_map</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">op_set</span></span><span class="w"> </span><span class="n"><span class="pre">from</span></span>, <span class="n"><span class="pre">op_set</span></span><span class="w"> </span><span class="n"><span class="pre">to</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">dim</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">imap</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">name</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_decl_map" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine defines a mapping between sets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>from</strong> – Source set.</p></li>
+<li><p><strong>to</strong> – Destination set.</p></li>
+<li><p><strong>dim</strong> – Number of mappings per source element.</p></li>
+<li><p><strong>imap</strong> – Mapping table.</p></li>
+<li><p><strong>name</strong> – A name to be used for output diagnostics.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_partition">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_partition</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">lib_name</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">lib_routine</span></span>, <span class="n"><span class="pre">op_set</span></span><span class="w"> </span><span class="n"><span class="pre">prime_set</span></span>, <span class="n"><span class="pre">op_map</span></span><span class="w"> </span><span class="n"><span class="pre">prime_map</span></span>, <span class="n"><span class="pre">op_dat</span></span><span class="w"> </span><span class="n"><span class="pre">coords</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_partition" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine controls the partitioning of the sets used for distributed memory parallel execution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lib_name</strong> – The partitioning library to use, see below.</p></li>
+<li><p><strong>lib_routine</strong> – The partitioning algorithm to use. Required if using <span class="c-expr sig sig-inline c"><span class="s">&quot;PTSCOTCH&quot;</span></span>, <span class="c-expr sig sig-inline c"><span class="s">&quot;PARMETIS&quot;</span></span> or <a class="reference external" href="https://kahip.github.io/">https://kahip.github.io/</a> as the <strong>lib_name</strong>.</p></li>
+<li><p><strong>prime_set</strong> – Specifies the set to be partitioned.</p></li>
+<li><p><strong>prime_map</strong> – Specifies the map to be used to create adjacency lists for the <strong>prime_set</strong>. Required if using <span class="c-expr sig sig-inline c"><span class="s">&quot;KWAY&quot;</span></span> or <span class="c-expr sig sig-inline c"><span class="s">&quot;GEOMKWAY&quot;</span></span>.</p></li>
+<li><p><strong>coords</strong> – Specifies the geometric coordinates of the <strong>prime_set</strong>. Required if using <span class="c-expr sig sig-inline c"><span class="s">&quot;GEOM&quot;</span></span> or <span class="c-expr sig sig-inline c"><span class="s">&quot;GEOMKWAY&quot;</span></span>.</p></li>
+</ul>
+</dd>
+</dl>
+<p>The current options for <strong>lib_name</strong> are:</p>
+<ul class="simple">
+<li><p><span class="c-expr sig sig-inline c"><span class="s">&quot;PTSCOTCH&quot;</span></span>: The <a class="reference external" href="https://www.labri.fr/perso/pelegrin/scotch/">PT-Scotch</a> library.</p></li>
+<li><p><span class="c-expr sig sig-inline c"><span class="s">&quot;PARMETIS&quot;</span></span>: The <a class="reference external" href="http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview">ParMETIS</a> library.</p></li>
+<li><p><span class="c-expr sig sig-inline c"><span class="s">&quot;KAHIP&quot;</span></span>: The <a class="reference external" href="https://kahip.github.io/">KaHIP</a> library.</p></li>
+<li><p><span class="c-expr sig sig-inline c"><span class="s">&quot;INERTIAL&quot;</span></span>: Internal 3D recursive inertial bisection partitioning.</p></li>
+<li><p><span class="c-expr sig sig-inline c"><span class="s">&quot;EXTERNAL&quot;</span></span>: External partitioning optionally read in when using HDF5 I/O.</p></li>
+<li><p><span class="c-expr sig sig-inline c"><span class="s">&quot;RANDOM&quot;</span></span>: Random partitioning, intended for debugging purposes.</p></li>
+</ul>
+<p>The options for <strong>lib_routine</strong> when using <span class="c-expr sig sig-inline c"><span class="s">&quot;PTSCOTCH&quot;</span></span> or <span class="c-expr sig sig-inline c"><span class="s">&quot;KAHIP&quot;</span></span> are:</p>
+<ul class="simple">
+<li><p><span class="c-expr sig sig-inline c"><span class="s">&quot;KWAY&quot;</span></span>: K-way graph partitioning.</p></li>
+</ul>
+<p>The options for <strong>lib_routine</strong> when using <span class="c-expr sig sig-inline c"><span class="s">&quot;PARMETIS&quot;</span></span> are:</p>
+<ul class="simple">
+<li><p><span class="c-expr sig sig-inline c"><span class="s">&quot;KWAY&quot;</span></span>: K-way graph partitioning.</p></li>
+<li><p><span class="c-expr sig sig-inline c"><span class="s">&quot;GEOM&quot;</span></span>: Geometric graph partitioning.</p></li>
+<li><p><span class="c-expr sig sig-inline c"><span class="s">&quot;GEOMKWAY&quot;</span></span>: Geometric followed by k-way graph partitioning.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_decl_const">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_decl_const</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">dim</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">type</span></span>, <span class="n"><span class="pre">T</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">dat</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_decl_const" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine defines constant data with global scope that can be used in kernel functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> – Number of data elements. For maximum efficiency this should be an integer literal.</p></li>
+<li><p><strong>type</strong> – The type of the data as a string. This can be either intrinsic (<span class="c-expr sig sig-inline c"><span class="s">&quot;float&quot;</span></span>, <span class="c-expr sig sig-inline c"><span class="s">&quot;double&quot;</span></span>, <span class="c-expr sig sig-inline c"><span class="s">&quot;int&quot;</span></span>, <span class="c-expr sig sig-inline c"><span class="s">&quot;uint&quot;</span></span>, <span class="c-expr sig sig-inline c"><span class="s">&quot;ll&quot;</span></span>, <span class="c-expr sig sig-inline c"><span class="s">&quot;ull&quot;</span></span>, or <span class="c-expr sig sig-inline c"><span class="s">&quot;bool&quot;</span></span>) or user-defined.</p></li>
+<li><p><strong>dat</strong> – A pointer to the data, checked for type consistency at run-time.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If <strong>dim</strong> is <span class="c-expr sig sig-inline c"><span class="m">1</span></span> then the variable is available in the kernel functions with type <span class="c-expr sig sig-inline c"><span class="n">T</span></span>, otherwise it will be available with type <span class="c-expr sig sig-inline c"><span class="n">T</span><span class="p">*</span></span>.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If the executable is not preprocessed, as is the case with the development sequential build, then you must define an equivalent global scope variable to use the data within the kernels.</p>
+</div>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_decl_dat">
+<span class="n"><span class="pre">op_dat</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_decl_dat</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">op_set</span></span><span class="w"> </span><span class="n"><span class="pre">set</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">dim</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">type</span></span>, <span class="n"><span class="pre">T</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">data</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">name</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_decl_dat" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine defines a dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>set</strong> – The set the data is associated with.</p></li>
+<li><p><strong>dim</strong> – Number of data elements per set element.</p></li>
+<li><p><strong>type</strong> – The datatype as a string, as with <a class="reference internal" href="#c.op_decl_const" title="op_decl_const"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_decl_const()</span></code></a>. A qualifier may be added to control data layout - see <a class="reference internal" href="#dataset-layout"><span class="std std-ref">Dataset Layout</span></a>.</p></li>
+<li><p><strong>data</strong> – Input data of type <code class="xref c c-type docutils literal notranslate"><span class="pre">T</span></code> (checked for consistency with <strong>type</strong> at run-time). The data must be provided in AoS form with each of the <strong>dim</strong> elements per set element contiguous in memory.</p></li>
+<li><p><strong>name</strong> – A name to be used for output diagnostics.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>At present <strong>dim</strong> must be an integer literal. This restriction will be removed in the future but an integer literal will remain more efficient.</p>
+</div>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_decl_dat_temp">
+<span class="n"><span class="pre">op_dat</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_decl_dat_temp</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">op_set</span></span><span class="w"> </span><span class="n"><span class="pre">set</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">dim</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">type</span></span>, <span class="n"><span class="pre">T</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">data</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">name</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_decl_dat_temp" title="Link to this definition"></a><br /></dt>
+<dd><p>Equivalent to <a class="reference internal" href="#c.op_decl_dat" title="op_decl_dat"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_decl_dat()</span></code></a> but the dataset may be released early with <a class="reference internal" href="#c.op_free_dat_temp" title="op_free_dat_temp"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_free_dat_temp()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_free_dat_temp">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_free_dat_temp</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">op_dat</span></span><span class="w"> </span><span class="n"><span class="pre">dat</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_free_dat_temp" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine releases a temporary dataset defined with <a class="reference internal" href="#c.op_decl_dat_temp" title="op_decl_dat_temp"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_decl_dat_temp()</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dat</strong> – The dataset to free.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="dataset-layout">
+<h3>Dataset Layout<a class="headerlink" href="#dataset-layout" title="Link to this heading"></a></h3>
+<p>The dataset storage in OP2 can be configured to use either AoS (Array of Structs) or SoA (Struct of Arrays) layouts. As a default the AoS layout is used, matching what is supplied to <a class="reference internal" href="#c.op_decl_dat" title="op_decl_dat"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_decl_dat()</span></code></a>, however depending on the access patterns of the kernels and the target hardware platform the SoA layout may perform favourably.</p>
+<p>OP2 can be directed to ues SoA layout storage by setting the environment variable <code class="docutils literal notranslate"><span class="pre">OP_AUTO_SOA=1</span></code> prior to code translation, or by appending <code class="docutils literal notranslate"><span class="pre">:soa</span></code> to the type strings in the <a class="reference internal" href="#c.op_decl_dat" title="op_decl_dat"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_decl_dat()</span></code></a> calls. The data supplied by the user should remain in the AoS layout.</p>
+</section>
+<section id="parallel-loops">
+<h3>Parallel Loops<a class="headerlink" href="#parallel-loops" title="Link to this heading"></a></h3>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_par_loop">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_par_loop</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">kernel</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">)</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">name</span></span>, <span class="n"><span class="pre">op_set</span></span><span class="w"> </span><span class="n"><span class="pre">set</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_par_loop" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine executes a parallelised loop over the given <strong>set</strong>, with arguments provided by the <a class="reference internal" href="#c.op_arg_gbl" title="op_arg_gbl"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_arg_gbl()</span></code></a>, <a class="reference internal" href="#c.op_arg_dat" title="op_arg_dat"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_arg_dat()</span></code></a>, and <a class="reference internal" href="#c.op_opt_arg_dat" title="op_opt_arg_dat"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_opt_arg_dat()</span></code></a> routines.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kernel</strong> – The kernel function to execute. The number of arguments to the kernel should match the number of <code class="xref c c-type docutils literal notranslate"><span class="pre">op_arg</span></code> arguments provided to this routine.</p></li>
+<li><p><strong>name</strong> – A name to be used for output diagnostics.</p></li>
+<li><p><strong>set</strong> – The set to loop over.</p></li>
+<li><p><strong>...</strong> – The <code class="xref c c-type docutils literal notranslate"><span class="pre">op_arg</span></code> arguments passed to each invocation of the kernel.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_arg_gbl">
+<span class="n"><span class="pre">op_arg</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_arg_gbl</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">T</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">data</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">dim</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">type</span></span>, <span class="n"><span class="pre">op_access</span></span><span class="w"> </span><span class="n"><span class="pre">acc</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_arg_gbl" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine defines an <code class="xref c c-type docutils literal notranslate"><span class="pre">op_arg</span></code> that may be used either to pass non-constant read-only data or to compute a global sum, maximum or minimum.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> – Source or destination data array.</p></li>
+<li><p><strong>dim</strong> – Number of data elements.</p></li>
+<li><p><strong>type</strong> – The datatype as a string. This is checked for consistency with <strong>data</strong> at run-time.</p></li>
+<li><p><strong>acc</strong> – The access type.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Valid access types for this routine are:</p>
+<ul class="simple">
+<li><p><code class="xref c c-data docutils literal notranslate"><span class="pre">OP_READ</span></code>: Read-only.</p></li>
+<li><p><code class="xref c c-data docutils literal notranslate"><span class="pre">OP_INC</span></code>: Global reduction to compute a sum.</p></li>
+<li><p><code class="xref c c-data docutils literal notranslate"><span class="pre">OP_MAX</span></code>: Global reduction to compute a maximum.</p></li>
+<li><p><code class="xref c c-data docutils literal notranslate"><span class="pre">OP_MIN</span></code>: Global reduction to compute a minimum.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_arg_dat">
+<span class="n"><span class="pre">op_arg</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_arg_dat</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">op_dat</span></span><span class="w"> </span><span class="n"><span class="pre">dat</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">idx</span></span>, <span class="n"><span class="pre">op_map</span></span><span class="w"> </span><span class="n"><span class="pre">map</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">dim</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">type</span></span>, <span class="n"><span class="pre">op_access</span></span><span class="w"> </span><span class="n"><span class="pre">acc</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_arg_dat" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine defines an <code class="xref c c-type docutils literal notranslate"><span class="pre">op_arg</span></code> that can be used to pass a dataset either directly attached to the target <code class="xref c c-type docutils literal notranslate"><span class="pre">op_set</span></code> or attached to an <code class="xref c c-type docutils literal notranslate"><span class="pre">op_set</span></code> reachable through a mapping.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dat</strong> – The dataset.</p></li>
+<li><p><strong>idx</strong> – The per-set-element index into the map to use. You may pass a negative value here to use a range of indicies - see below. This argument is ignored if the identity mapping is used.</p></li>
+<li><p><strong>map</strong> – The mapping to use. Pass <code class="xref c c-data docutils literal notranslate"><span class="pre">OP_ID</span></code> for the identity mapping if no mapping indirection is required.</p></li>
+<li><p><strong>dim</strong> – The dimension of the dataset, checked for consistency at run-time.</p></li>
+<li><p><strong>type</strong> – The datatype of the dataset as a string, checked for consistency at run-time.</p></li>
+<li><p><strong>acc</strong> – The access type.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Valid access types for this routine are:</p>
+<ul class="simple">
+<li><p><code class="xref c c-data docutils literal notranslate"><span class="pre">OP_READ</span></code>: Read-only.</p></li>
+<li><p><code class="xref c c-data docutils literal notranslate"><span class="pre">OP_WRITE</span></code>: Write-only.</p></li>
+<li><p><code class="xref c c-data docutils literal notranslate"><span class="pre">OP_RW</span></code>: Read and write.</p></li>
+<li><p><code class="xref c c-data docutils literal notranslate"><span class="pre">OP_INC</span></code>: Increment or global reduction to compute a sum.</p></li>
+</ul>
+<p>The <strong>idx</strong> parameter accepts both positive values to specify a single per-element map index, where the kernel is passed a single dimension array of data, or negative values to specify a range of mapping indicies leading to the kernel being passed a two-dimensional array of data. If a negative index is provided the first <strong>-idx</strong> mapping indicies are provided to the kernel.</p>
+<p>Consider the example of a kernel that is executed over a set of triangles, and is supplied the verticies via arguments. Using positive <strong>idx</strong> you would need one <code class="xref c c-type docutils literal notranslate"><span class="pre">op_arg</span></code> per vertex, leading to a kernel declaration similar to:</p>
+<div class="highlight-C notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">v1</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">v2</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">v3</span><span class="p">,</span><span class="w"> </span><span class="p">...);</span>
+</pre></div>
+</div>
+<p>Alternatively, using a negative <strong>idx</strong> of <span class="c-expr sig sig-inline c"><span class="o">-</span><span class="m">3</span></span> allows a more succinct declaration:</p>
+<div class="highlight-C notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="o">**</span><span class="n">v</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span><span class="w"> </span><span class="p">...);</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><code class="xref c c-data docutils literal notranslate"><span class="pre">OP_WRITE</span></code> and <code class="xref c c-data docutils literal notranslate"><span class="pre">OP_RW</span></code> accesses <em>must not</em> have any potential data conflicts. This means that two different elements of the set cannot, through a map, reference the same elements of the dataset.</p>
+<p>Furthermore with <code class="xref c c-data docutils literal notranslate"><span class="pre">OP_WRITE</span></code> the kernel function <em>must</em> set the value of all <strong>dim</strong> components of the dataset. If this is not possible then <code class="xref c c-data docutils literal notranslate"><span class="pre">OP_RW</span></code> access should be specified.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>At present <strong>dim</strong> must be an integer literal. This restriction will be removed in the future but an integer literal will remain more efficient.</p>
+</div>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_opt_arg_dat">
+<span class="n"><span class="pre">op_arg</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_opt_arg_dat</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">op_dat</span></span><span class="w"> </span><span class="n"><span class="pre">dat</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">idx</span></span>, <span class="n"><span class="pre">op_map</span></span><span class="w"> </span><span class="n"><span class="pre">map</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">dim</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">type</span></span>, <span class="n"><span class="pre">op_access</span></span><span class="w"> </span><span class="n"><span class="pre">acc</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">flag</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_opt_arg_dat" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine is equivalent to <a class="reference internal" href="#c.op_arg_dat" title="op_arg_dat"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_arg_dat()</span></code></a> except for an extra <strong>flag</strong> parameter that governs whether the argument will be used (non-zero) or not (zero). This is intended to ease development of large application codes where many features may be enabled or disabled based on flags.</p>
+<p>The argument must not be dereferenced in the user kernel if <strong>flag</strong> is set to zero. If the value of the flag needs to be passed to the kernel then use an additional <a class="reference internal" href="#c.op_arg_gbl" title="op_arg_gbl"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_arg_gbl()</span></code></a> argument.</p>
+</dd></dl>
+
+</section>
+<section id="hdf5-i-o">
+<h3>HDF5 I/O<a class="headerlink" href="#hdf5-i-o" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://www.hdfgroup.org/solutions/hdf5/">HDF5</a> has become the <em>de facto</em> format for parallel file I/O, with various other standards like <a class="reference external" href="https://cgns.github.io/hdf5.html">CGNS</a> layered on top. To make it as easy as possible for users to develop distributed-memory OP2 applications, we provide alternatives to some of the OP2 routines in which the data is read by OP2 from an HDF5 file, instead of being supplied by the user. This is particularly useful for distributed memory MPI systems where the user would otherwise have to manually scatter data arrays over nodes prior to initialisation.</p>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_decl_set_hdf5">
+<span class="n"><span class="pre">op_set</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_decl_set_hdf5</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">file</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">name</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_decl_set_hdf5" title="Link to this definition"></a><br /></dt>
+<dd><p>Equivalent to <a class="reference internal" href="#c.op_decl_set" title="op_decl_set"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_decl_set()</span></code></a> but takes a <strong>file</strong> instead of <strong>size</strong>, reading in the set size from the HDF5 file using the keyword <strong>name</strong>.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_decl_map_hdf5">
+<span class="n"><span class="pre">op_map</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_decl_map_hdf5</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">op_set</span></span><span class="w"> </span><span class="n"><span class="pre">from</span></span>, <span class="n"><span class="pre">op_set</span></span><span class="w"> </span><span class="n"><span class="pre">to</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">dim</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">file</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">name</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_decl_map_hdf5" title="Link to this definition"></a><br /></dt>
+<dd><p>Equivalent to <a class="reference internal" href="#c.op_decl_map" title="op_decl_map"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_decl_map()</span></code></a> but takes a <strong>file</strong> instead of <strong>imap</strong>, reading in the mappiing table from the HDF5 file using the keyword <strong>name</strong>.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_decl_dat_hdf5">
+<span class="n"><span class="pre">op_dat</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_decl_dat_hdf5</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">op_set</span></span><span class="w"> </span><span class="n"><span class="pre">set</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">dim</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">type</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">file</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">name</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_decl_dat_hdf5" title="Link to this definition"></a><br /></dt>
+<dd><p>Equivalent to <a class="reference internal" href="#c.op_decl_dat" title="op_decl_dat"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_decl_dat()</span></code></a> but takes a <strong>file</strong> instead of <strong>data</strong>, reading in the dataset from the HDF5 file using the keyword <strong>name</strong>.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_get_const_hdf5">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_get_const_hdf5</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">name</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">dim</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">type</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">data</span></span>, <span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">file</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_get_const_hdf5" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine reads constant data from an HDF5 file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – The name of the dataset in the HDF5 file.</p></li>
+<li><p><strong>dim</strong> – The number of data elements in the dataset.</p></li>
+<li><p><strong>type</strong> – The string type of the data.</p></li>
+<li><p><strong>data</strong> – A user-supplied array of at least <strong>dim</strong> capacity to read the data into.</p></li>
+<li><p><strong>file</strong> – The HDF5 file to read the data from.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>To use the read data from within a kernel function you must declare it with <a class="reference internal" href="#c.op_decl_const" title="op_decl_const"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_decl_const()</span></code></a></p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The number of data elements specified by the <strong>dim</strong> parameter must match the number of data elements present in the HDF5 file.</p>
+</div>
+</dd></dl>
+
+</section>
+<section id="mpi-without-hdf5-i-o">
+<h3>MPI without HDF5 I/O<a class="headerlink" href="#mpi-without-hdf5-i-o" title="Link to this heading"></a></h3>
+<p>If you wish to use the MPI executables but don’t want to use the OP2 HDF5 support, you may perform your own file I/O and then provide the data to OP2 using the normal routines. The behaviour of these routines under MPI is as follows:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#c.op_decl_set" title="op_decl_set"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_decl_set()</span></code></a>: The <strong>size</strong> parameter is the number of elements provided by this MPI process.</p></li>
+<li><p><a class="reference internal" href="#c.op_decl_map" title="op_decl_map"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_decl_map()</span></code></a>: The <strong>imap</strong> parameter provides the part of the mapping table corresponding to the processes share of the <strong>from</strong> set.</p></li>
+<li><p><a class="reference internal" href="#c.op_decl_dat" title="op_decl_dat"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_decl_dat()</span></code></a>: The <strong>data</strong> parameter provides the part of the dataset corresponding to the processes share of the <strong>set</strong> set.</p></li>
+</ul>
+<p>For example if an application has 4 processes, 4M nodes and 16M edges, then each process might be responsible for providing 1M nodes and 4M edges.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This is effectively using simple contiguous block partitioning of the datasets, but it is important to note that this is strictly for I/O and this partitioning will not be used for the parallel computation. OP2 will re-partition the datasets, re-number the mapping tables and then shuffle the data between the MPI processes as required.</p>
+</div>
+</section>
+<section id="other-i-o-and-utilities">
+<h3>Other I/O and Utilities<a class="headerlink" href="#other-i-o-and-utilities" title="Link to this heading"></a></h3>
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_printf">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_printf</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">format</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_printf" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine wraps the standard <code class="xref c c-func docutils literal notranslate"><span class="pre">printf()</span></code> but only prints on the <code class="xref c c-data docutils literal notranslate"><span class="pre">MPI_ROOT</span></code> process.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_fetch_data">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_fetch_data</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">op_dat</span></span><span class="w"> </span><span class="n"><span class="pre">dat</span></span>, <span class="n"><span class="pre">T</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">data</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_fetch_data" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine copies data held in an <code class="xref c c-type docutils literal notranslate"><span class="pre">op_dat</span></code> from the OP2 backend into a user allocated memory buffer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dat</strong> – The dataset to copy from.</p></li>
+<li><p><strong>data</strong> – The user allocated buffer to copy into.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The memory buffer provided by the user must be large enough to hold all elements in the <code class="xref c c-type docutils literal notranslate"><span class="pre">op_dat</span></code>.</p>
+</div>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_fetch_data_idx">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_fetch_data_idx</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">op_dat</span></span><span class="w"> </span><span class="n"><span class="pre">dat</span></span>, <span class="n"><span class="pre">T</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">data</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">low</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n"><span class="pre">high</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_fetch_data_idx" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine is equivalent to <a class="reference internal" href="#c.op_fetch_data" title="op_fetch_data"><code class="xref c c-func docutils literal notranslate"><span class="pre">op_fetch_data()</span></code></a> but with extra parameters to specify the range of data elements to fetch from the <code class="xref c c-type docutils literal notranslate"><span class="pre">op_dat</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dat</strong> – The dataset to copy from.</p></li>
+<li><p><strong>data</strong> – The user allocated buffer to copy into.</p></li>
+<li><p><strong>low</strong> – The index of the first element to be fetched.</p></li>
+<li><p><strong>high</strong> – The index of the last element to be fetched.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_fetch_data_hdf5_file">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_fetch_data_hdf5_file</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">op_dat</span></span><span class="w"> </span><span class="n"><span class="pre">dat</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">file_name</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_fetch_data_hdf5_file" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine writes the data held in an <code class="xref c c-type docutils literal notranslate"><span class="pre">op_dat</span></code> from the OP2 backend into an HDF5 file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dat</strong> – The source dataset.</p></li>
+<li><p><strong>file</strong> – The name of the HDF5 file to write the dataset into.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_print_dat_to_binfile">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_print_dat_to_binfile</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">op_dat</span></span><span class="w"> </span><span class="n"><span class="pre">dat</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">file_name</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_print_dat_to_binfile" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine writes the data held in an <code class="xref c c-type docutils literal notranslate"><span class="pre">op_dat</span></code> from the OP2 backend into a binary file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dat</strong> – The source dataset.</p></li>
+<li><p><strong>file</strong> – The name of the binary file to write the dataset into.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_print_dat_to_txtfile">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_print_dat_to_txtfile</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">op_dat</span></span><span class="w"> </span><span class="n"><span class="pre">dat</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">file_name</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_print_dat_to_txtfile" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine writes the data held in an <code class="xref c c-type docutils literal notranslate"><span class="pre">op_dat</span></code> from the OP2 backend into a text file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dat</strong> – The source dataset.</p></li>
+<li><p><strong>file</strong> – The name of the text file to write the dataset into.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_is_root">
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_is_root</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_is_root" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine allows a convenient way to test if the current process is the MPI root process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return values<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>1</strong> – Process is the MPI root.</p></li>
+<li><p><strong>0</strong> – Process is <em>not</em> the MPI root.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_get_size">
+<span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_get_size</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">op_set</span></span><span class="w"> </span><span class="n"><span class="pre">set</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_get_size" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine gets the global size of an <code class="xref c c-type docutils literal notranslate"><span class="pre">op_set</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>set</strong> – The set to query.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The number of elements in the set across all processes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_dump_to_hdf5">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_dump_to_hdf5</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">file_name</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_dump_to_hdf5" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine dumps the contents of all <code class="xref c c-type docutils literal notranslate"><span class="pre">op_set</span></code>s, <code class="xref c c-type docutils literal notranslate"><span class="pre">op_dat</span></code>s and <code class="xref c c-type docutils literal notranslate"><span class="pre">op_map</span></code>s to an HDF5 file <em>as held internally by OP2</em>, intended for debugging purposes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_name</strong> – The name of the HDF5 file to write the data into.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_timers">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_timers</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">cpu</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">et</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_timers" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine provides the current wall-clock time in seconds since the Epoch using <code class="xref c c-func docutils literal notranslate"><span class="pre">gettimeofday()</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cpu</strong> – Unused.</p></li>
+<li><p><strong>et</strong> – A variable to hold the time.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_timing_output">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_timing_output</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_timing_output" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine prints OP2 performance details.</p>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_timings_to_csv">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_timings_to_csv</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">file_name</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_timings_to_csv" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine writes OP2 performance details to the specified CSV file. For MPI executables the timings are broken down by rank. For OpenMP executables with the <code class="docutils literal notranslate"><span class="pre">OP_TIME_THREADS</span></code> environment variable set, the timings are broken down by thread. For MPI + OpenMP executables with <code class="docutils literal notranslate"><span class="pre">OP_TIME_THREADS</span></code> set the timings are broken down per thread per rank.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_name</strong> – The name of the CSV file to write.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c function">
+<dt class="sig sig-object c" id="c.op_diagnostic_output">
+<span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op_diagnostic_output</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#c.op_diagnostic_output" title="Link to this definition"></a><br /></dt>
+<dd><p>This routine prints diagnostics relating to sets, mappings and datasets.</p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="devapp.html" class="btn btn-neutral float-left" title="Developing an OP2 Application" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="examples.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Gihan Mudalige, Istvan Reguly, Mike Giles.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

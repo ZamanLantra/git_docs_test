@@ -1,0 +1,209 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting Started &mdash; OP2 latest documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=c6e86fd7"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Developing an OP2 Application" href="devapp.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            OP2
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#spack">Spack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#manual-build">Manual Build</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#toolchain-and-build-dependencies">Toolchain and Build Dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#library-dependencies">Library Dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building">Building</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devapp.html">Developing an OP2 Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">OP2 API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="perf.html">Performance Tuning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer_guide.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pubs.html">Publications</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">OP2</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Getting Started</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/getting_started.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h1>
+<section id="spack">
+<h2>Spack<a class="headerlink" href="#spack" title="Link to this heading"></a></h2>
+<p>Coming soon.</p>
+</section>
+<section id="manual-build">
+<h2>Manual Build<a class="headerlink" href="#manual-build" title="Link to this heading"></a></h2>
+<section id="toolchain-and-build-dependencies">
+<h3>Toolchain and Build Dependencies<a class="headerlink" href="#toolchain-and-build-dependencies" title="Link to this heading"></a></h3>
+<p>These are likely provided in some form by either your distribution’s package manager or pre-installed and loaded via commands such as with <a class="reference external" href="http://modules.sourceforge.net/">Environment Modules</a>:</p>
+<ul class="simple">
+<li><p>GNU Make &gt; 4.2</p></li>
+<li><p>A C/C++17 compatible compiler: Currently supported compilers are GCC, Clang, Cray, Intel, IBM XL and NVHPC.</p></li>
+<li><p>(Optional) A Fortran compiler: Currently supported compilers are GFortran, Cray, Intel, IBM XL and NVHPC.</p></li>
+<li><p>(Optional) An MPI implementation: Any implementation with the <code class="docutils literal notranslate"><span class="pre">mpicc</span></code>, <code class="docutils literal notranslate"><span class="pre">mpicxx</span></code>, and <code class="docutils literal notranslate"><span class="pre">mpif90</span></code> wrappers is supported.</p></li>
+<li><p>(Optional) NVIDIA CUDA &gt;= 11.8</p></li>
+</ul>
+</section>
+<section id="library-dependencies">
+<h3>Library Dependencies<a class="headerlink" href="#library-dependencies" title="Link to this heading"></a></h3>
+<p>These may also be provided from various package managers and modules, however they must be built with a specific configuration and with the same compiler toolchain that you plan on using to build OP2:</p>
+<ul class="simple">
+<li><p>(Optional) <a class="reference external" href="https://www.labri.fr/perso/pelegrin/scotch/">(PT-)Scotch</a>: Used for mesh partitioning. You must build both the sequential Scotch and parallel PT-Scotch with 32-bit indicies (<code class="docutils literal notranslate"><span class="pre">-DIDXSIZE=32</span></code>) and without threading support (remove <code class="docutils literal notranslate"><span class="pre">-DSCOTCH_PTHREAD</span></code>).</p></li>
+<li><p>(Optional) <a class="reference external" href="http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview">ParMETIS</a>: Used for mesh partitioning.</p></li>
+<li><p>(Optional) <a class="reference external" href="https://kahip.github.io/">KaHIP</a>: Used for mesh partitioning.</p></li>
+<li><p>(Optional) <a class="reference external" href="https://www.hdfgroup.org/solutions/hdf5/">HDF5</a>: Used for HDF5 I/O. You may build with and without <code class="docutils literal notranslate"><span class="pre">--enable-parallel</span></code> (depending on if you need MPI), and then specify both builds via the environment variables listed below.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>To build the MPI enabled OP2 libraries you will need a parallel HDF5 build, however you only need a sequential HDF5 build if you need HDF5 support for the sequential OP2 libraries.</p>
+</div>
+</section>
+<section id="building">
+<h3>Building<a class="headerlink" href="#building" title="Link to this heading"></a></h3>
+<p>First, clone the repository:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/OP-DSL/OP2-Common.git
+<span class="nb">cd</span><span class="w"> </span>OP2-Common
+</pre></div>
+</div>
+<p>Then, setup toolchain configuration:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">OP2_COMPILER</span><span class="o">={</span>gnu,<span class="w"> </span>cray,<span class="w"> </span>intel,<span class="w"> </span>xl,<span class="w"> </span>nvhpc<span class="o">}</span>
+</pre></div>
+</div>
+<p>Alternatively for a greater level of control:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">OP2_C_COMPILER</span><span class="o">={</span>gnu,<span class="w"> </span>clang,<span class="w"> </span>cray,<span class="w"> </span>intel,<span class="w"> </span>xl,<span class="w"> </span>nvhpc<span class="o">}</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">OP2_C_CUDA_COMPILER</span><span class="o">={</span>nvhpc<span class="o">}</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">OP2_F_COMPILER</span><span class="o">={</span>gnu,<span class="w"> </span>cray,<span class="w"> </span>intel,<span class="w"> </span>xl,<span class="w"> </span>nvhpc<span class="o">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In some scenarios you may be able to use a profile rather than specifying an <code class="docutils literal notranslate"><span class="pre">OP2_COMPILER</span></code>. See <a class="reference external" href="https://github.com/OP-DSL/OP2-Common/blob/64ffddc/makefiles/README.md">makefiles/README.md</a> for more information.</p>
+</div>
+<p>Then, specify the paths to the library dependency installation directories:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">PTSCOTCH_INSTALL_PATH</span><span class="o">=</span>&lt;path/to/ptscotch&gt;
+<span class="nb">export</span><span class="w"> </span><span class="nv">PARMETIS_INSTALL_PATH</span><span class="o">=</span>&lt;path/to/parmetis&gt;
+<span class="nb">export</span><span class="w"> </span><span class="nv">KAHIP_INSTALL_PATH</span><span class="o">=</span>&lt;path/to/kahip&gt;
+<span class="nb">export</span><span class="w"> </span>HDF5_<span class="o">{</span>SEQ,<span class="w"> </span>PAR<span class="o">}</span><span class="nv">_INSTALL_PATH</span><span class="o">=</span>&lt;path/to/hdf5&gt;
+
+<span class="nb">export</span><span class="w"> </span><span class="nv">CUDA_INSTALL_PATH</span><span class="o">=</span>&lt;path/to/cuda/toolkit&gt;
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You may not need to specify the <code class="docutils literal notranslate"><span class="pre">X_INSTALL_PATH</span></code> varaibles if the include paths and library search paths are automatically injected by your package manager or module system.</p>
+</div>
+<p>If you are using CUDA then you may also specify a comma separated list of target architectures for which to generate code for:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">NV_ARCH</span><span class="o">={</span>Fermi,<span class="w"> </span>Kepler,<span class="w"> </span>...,<span class="w"> </span>Ampere<span class="o">}[</span>,<span class="o">{</span>Fermi,<span class="w"> </span>...<span class="o">}]</span>
+</pre></div>
+</div>
+<p>Make the build config, verifying that the compilers, libraries and flags are as you expect:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>-C<span class="w"> </span>op2<span class="w"> </span>config
+</pre></div>
+</div>
+<p>Finally, build OP2 and an example app:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>-C<span class="w"> </span>op2<span class="w"> </span>-j<span class="k">$(</span>nproc<span class="k">)</span>
+make<span class="w"> </span>-C<span class="w"> </span>apps/c/airfoil/airfoil_plain/dp<span class="w"> </span>-j<span class="k">$(</span>nproc<span class="k">)</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The MPI variants of the libraries and apps will only be built if an <code class="docutils literal notranslate"><span class="pre">mpicxx</span></code> executable is found. It is up to you to ensure that the MPI wrapper wraps the compiler you specify via <code class="docutils literal notranslate"><span class="pre">OP2_COMPILER</span></code>. To manually set the path to the MPI executables you may use <code class="docutils literal notranslate"><span class="pre">MPI_INSTALL_PATH</span></code>.</p>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="introduction.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="devapp.html" class="btn btn-neutral float-right" title="Developing an OP2 Application" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Gihan Mudalige, Istvan Reguly, Mike Giles.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
