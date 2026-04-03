@@ -1,2 +1,2 @@
-echo "This is running on iynx"
+echo "This is running on iynx -- github copy"
 
