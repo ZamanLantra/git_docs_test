@@ -1,7 +1,7 @@
 # Documentation example
 
-[![Build Status](https://github.com/ZamanLantra/git_docs_test/actions/workflows/documentation.yml/badge.svg)](https://github.com/ZamanLantra/git_docs_test/actions)
-[![Build Status](https://github.com/ZamanLantra/git_docs_test/actions/workflows/test.yml/badge.svg)](https://github.com/ZamanLantra/git_docs_test/actions)
+[![Build Status](https://github.com/ZamanLantra/git_docs_test/actions/workflows/documentation.yml/badge.svg?branch=main)](https://github.com/ZamanLantra/git_docs_test/actions)
+[![Build Status](https://github.com/ZamanLantra/git_docs_test/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/ZamanLantra/git_docs_test/actions)
 
 # Run local runner
 cd ~/actions-runner
