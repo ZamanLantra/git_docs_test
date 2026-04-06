@@ -1,6 +1,6 @@
 # Documentation example
 
-[![Build Status](https://github.com/ZamanLantra/git_docs_test/actions/workflows/ci.yml/badge.svg)](https://github.com/ZamanLantra/git_docs_test/actions)
+[![Build Status](https://github.com/ZamanLantra/git_docs_test/.github/workflows/documentation.yml/badge.svg)](https://github.com/ZamanLantra/git_docs_test/.github)
 
 We use this example in the lesson
 [How to document your research software](https://coderefinery.github.io/documentation/).
