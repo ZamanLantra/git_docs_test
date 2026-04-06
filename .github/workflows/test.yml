@@ -17,3 +17,6 @@ jobs:
 
       - name: Notify Success
         run: echo "SUCCESS"
+
+      - name: Force failure
+        run: exit 1

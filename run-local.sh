@@ -1,2 +1,2 @@
-echo "This is running on iynx -- github copy"
+echo "This is running on $(hostname) -- github new edit"
 
