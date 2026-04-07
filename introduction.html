@@ -1,0 +1,157 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Introduction &mdash; OP2 latest documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=c6e86fd7"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting Started" href="getting_started.html" />
+    <link rel="prev" title="Welcome to OP2 documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            OP2
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#licencing">Licencing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#citing">Citing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#support">Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#funding">Funding</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devapp.html">Developing an OP2 Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">OP2 API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="perf.html">Performance Tuning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer_guide.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pubs.html">Publications</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">OP2</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Introduction</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/introduction.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p><a class="reference external" href="https://github.com/OP-DSL/OP2-Common">OP2</a> (Oxford Parallel library for Unstructured mesh solvers) is a high-level embedded domain specific language (eDSL) for writing <strong>unstructured mesh</strong> algorithms with automatic parellelisation on multi-core and many-core architectures. The API is embedded in both C/C++ and Fortran.</p>
+<p>The current OP2 eDSL supports generating code targeting multi-core CPUs with SIMD vectorisation and OpenMP threading, many-core GPUs with CUDA or OpenMP offloading, and distributed memory cluster variants of these using MPI. There is also experimental support for targeting a wider range of GPUs using SYCL and AMD HIP.</p>
+<p>These pages provide detailed documentation on using OP2, including an installation guide, an overview of the C++ API, a walkthrough of the development of an example application, and developer documentation.</p>
+</section>
+<section id="licencing">
+<h2>Licencing<a class="headerlink" href="#licencing" title="Link to this heading"></a></h2>
+<p>OP2 is released as an open-source project under the BSD 3-Clause License. See the <a class="reference external" href="https://github.com/OP-DSL/OP2-Common/blob/b2fd385/LICENSE">LICENSE</a> file for more information.</p>
+</section>
+<section id="citing">
+<h2>Citing<a class="headerlink" href="#citing" title="Link to this heading"></a></h2>
+<p>To cite OP2, please reference the following paper:</p>
+<p><a class="reference external" href="https://ieeexplore.ieee.org/document/6339594">G. R. Mudalige, M. B. Giles, I. Reguly, C. Bertolli and P. H. J. Kelly, “OP2: An active library framework for solving unstructured mesh-based applications on multi-core and many-core architectures,” 2012 Innovative Parallel Computing (InPar), 2012, pp. 1-12, doi: 10.1109/InPar.2012.6339594.</a></p>
+<div class="highlight-TeX notranslate"><div class="highlight"><pre><span></span>@INPROCEEDINGS<span class="nb">{</span>6339594,
+  author=<span class="nb">{</span>Mudalige, G.R. and Giles, M.B. and Reguly, I. and Bertolli, C. and Kelly, P.H.J<span class="nb">}</span>,
+  booktitle=<span class="nb">{</span>2012 Innovative Parallel Computing (InPar)<span class="nb">}</span>,
+  title=<span class="nb">{</span>OP2: An active library framework for solving unstructured mesh-based applications on multi-core and many-core architectures<span class="nb">}</span>,
+  year=<span class="nb">{</span>2012<span class="nb">}</span>,
+  volume=<span class="nb">{}</span>,
+  number=<span class="nb">{}</span>,
+  pages=<span class="nb">{</span>1-12<span class="nb">}</span>,
+  doi=<span class="nb">{</span>10.1109/InPar.2012.6339594<span class="nb">}}</span>
+</pre></div>
+</div>
+</section>
+<section id="support">
+<h2>Support<a class="headerlink" href="#support" title="Link to this heading"></a></h2>
+<p>The preferred method of reporting bugs and issues with OPS is to submit an issue via the repository’s <a class="reference external" href="https://github.com/OP-DSL/OP2-Common/issues">issue tracker</a>. Users can also email the authors directly by contacting the <a class="reference external" href="https://op-dsl.github.io/about.html">OP-DSL team</a>.</p>
+</section>
+<section id="funding">
+<h2>Funding<a class="headerlink" href="#funding" title="Link to this heading"></a></h2>
+<p>Development of the OP2 is or has been part supported by the Engineering and Physical Sciences Research Council (EPSRC) grants EP/1006079/1, EP/100677X/1 on Multi-layered Abstractions for PDEs, EP/JOl0553/1 Algorithms and Software for Emerging Architectures (ASEArch), EP/S005072/1 Strategic Partnership in Computational Science for Advanced Simulation and Modelling of Engineering Systems - ASiMoV, the Royal Society through their Industry Fellowship Scheme (INF/R1/180012), the UK Technology Strategy Board and Rolls-Royce plc. through the  SILOET project, The Janos Bolyai Research Scholarship of the Hungarian Academy of Sciences and the European Commission. We are also grateful for hardware resources during development from the Oak Ridge Leadership Computing Facility at the Oak Ridge National Laboratory, which is supported by the Office of Science of the U.S. Department of Energy under Contract No. DE-AC05-00OR22725, <a class="reference external" href="http://www.archer.ac.uk/">ARCHER</a> and <a class="reference external" href="https://www.archer2.ac.uk/">ARCHER2</a> UK National Supercomputing Service, the <a class="reference external" href="http://dx.doi.org/10.5281/zenodo.22558">University of Oxford Advanced Research Computing (ARC)</a> facility and hardware donations/access from Nvidia and Intel.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to OP2 documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="getting_started.html" class="btn btn-neutral float-right" title="Getting Started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Gihan Mudalige, Istvan Reguly, Mike Giles.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
