@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - main   # change to your branch if needed
-
+  workflow_dispatch:
+  
 jobs:
   local-test:
     runs-on: self-hosted
@@ -17,6 +18,3 @@ jobs:
 
       - name: Notify Success
         run: echo "SUCCESS"
-
-      - name: Force failure
-        run: exit 1
